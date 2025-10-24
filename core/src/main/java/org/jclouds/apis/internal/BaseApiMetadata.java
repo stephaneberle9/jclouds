@@ -45,11 +45,13 @@ import org.jclouds.Context;
 import org.jclouds.JcloudsVersion;
 import org.jclouds.View;
 import org.jclouds.apis.ApiMetadata;
+import org.jclouds.domain.Credentials;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Module;
@@ -108,6 +110,7 @@ public abstract class BaseApiMetadata implements ApiMetadata {
       private Optional<String> defaultEndpoint = Optional.absent();
       private Optional<String> defaultIdentity = Optional.absent();
       private Optional<String> defaultCredential = Optional.absent();
+      private Optional<Supplier<Credentials>> defaultCredentialsSupplier = Optional.absent();
       private Properties defaultProperties = BaseApiMetadata.defaultProperties();
       private URI documentation;
       private TypeToken<? extends Context> context = typeToken(Context.class);
@@ -232,6 +235,15 @@ public abstract class BaseApiMetadata implements ApiMetadata {
        * {@inheritDoc}
        */
       @Override
+      public T defaultCredentialsSupplier(Supplier<Credentials> defaultCredentialsSupplier) {
+         this.defaultCredentialsSupplier = Optional.fromNullable(defaultCredentialsSupplier);
+         return self();
+      }
+
+      /**
+       * {@inheritDoc}
+       */
+      @Override
       public T defaultProperties(Properties defaultProperties) {
          this.defaultProperties = checkNotNull(defaultProperties, "defaultProperties");
          return self();
@@ -277,7 +289,8 @@ public abstract class BaseApiMetadata implements ApiMetadata {
                   in.getIdentityName()).credentialName(in.getCredentialName().orNull()).version(in.getVersion())
                   .buildVersion(in.getBuildVersion().orNull()).defaultEndpoint(in.getDefaultEndpoint().orNull())
                   .defaultIdentity(in.getDefaultIdentity().orNull()).defaultCredential(
-                           in.getDefaultCredential().orNull()).defaultProperties(in.getDefaultProperties())
+                  in.getDefaultCredential().orNull()).defaultCredentialsSupplier(
+                  in.getDefaultCredentialsSupplier().orNull()).defaultProperties(in.getDefaultProperties())
                   .documentation(in.getDocumentation()).context(in.getContext()).defaultModules(in.getDefaultModules());
       }
    }
@@ -293,6 +306,7 @@ public abstract class BaseApiMetadata implements ApiMetadata {
    private final Optional<String> defaultEndpoint;
    private final Optional<String> defaultIdentity;
    private final Optional<String> defaultCredential;
+   private final Optional<Supplier<Credentials>> defaultCredentialsSupplier;
    private final Properties defaultProperties;
    private final URI documentation;
    private final TypeToken<? extends Context> context;
@@ -301,13 +315,14 @@ public abstract class BaseApiMetadata implements ApiMetadata {
    protected BaseApiMetadata(Builder<?> builder) {
       this(builder.id, builder.name, builder.views, builder.endpointName, builder.identityName, builder.credentialName,
                builder.version, builder.buildVersion, builder.defaultEndpoint, builder.defaultIdentity,
-               builder.defaultCredential, builder.defaultProperties, builder.documentation, builder.context,
-               builder.defaultModules);
+               builder.defaultCredential, builder.defaultCredentialsSupplier, builder.defaultProperties,
+               builder.documentation, builder.context, builder.defaultModules);
    }
 
    protected BaseApiMetadata(String id, String name, Set<TypeToken<? extends View>> views, String endpointName, String identityName, // NO_UCD (use private)
             Optional<String> credentialName, String version, Optional<String> buildVersion,
             Optional<String> defaultEndpoint, Optional<String> defaultIdentity, Optional<String> defaultCredential,
+            Optional<Supplier<Credentials>> defaultCredentialsSupplier,
             Properties defaultProperties, URI documentation, TypeToken<? extends Context> context,
             Set<Class<? extends Module>> defaultModules) {
       this.id = checkNotNull(id, "id");
@@ -321,6 +336,7 @@ public abstract class BaseApiMetadata implements ApiMetadata {
       this.defaultEndpoint = checkNotNull(defaultEndpoint, "defaultEndpoint");
       this.defaultIdentity = checkNotNull(defaultIdentity, "defaultIdentity");
       this.defaultCredential = checkNotNull(defaultCredential, "defaultCredential");
+      this.defaultCredentialsSupplier = checkNotNull(defaultCredentialsSupplier, "defaultCredentialsSupplier");
       this.defaultProperties = checkNotNull(defaultProperties, "defaultProperties");
       this.documentation = checkNotNull(documentation, "documentation");
       this.context = checkNotNull(context, "context");
@@ -442,6 +458,14 @@ public abstract class BaseApiMetadata implements ApiMetadata {
    @Override
    public Optional<String> getDefaultCredential() {
       return defaultCredential;
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public Optional<Supplier<Credentials>> getDefaultCredentialsSupplier() {
+      return defaultCredentialsSupplier;
    }
 
    /**

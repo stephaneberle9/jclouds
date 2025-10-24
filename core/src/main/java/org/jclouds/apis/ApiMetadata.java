@@ -22,10 +22,12 @@ import java.util.Set;
 
 import org.jclouds.Context;
 import org.jclouds.View;
+import org.jclouds.domain.Credentials;
 import org.jclouds.javax.annotation.Nullable;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Module;
 
@@ -108,6 +110,11 @@ public interface ApiMetadata {
        * @see ApiMetadata#getDefaultCredential()
        */
       B defaultCredential(@Nullable String defaultCredential);
+
+      /**
+       * @see ApiMetadata#getDefaultCredentialsSupplier()
+       */
+      B defaultCredentialsSupplier(@Nullable Supplier<Credentials> defaultCredentialsSupplier);
 
       /**
        * @see ApiMetadata#getDefaultProperties()
@@ -233,6 +240,16 @@ public interface ApiMetadata {
     * @see #getCredentialName
     */
    Optional<String> getDefaultCredential();
+
+   /**
+    * Explicitly sets a supplier to detect the identity and the secret for
+    * creating an authenticated subject or session at runtime
+    * 
+    * @return the supplier for the credentials on this api, if it is
+    *         required (ex. user, email, account, apikey, tenantId:username and
+    *         password, secret, rsaKey)
+    */
+   Optional<Supplier<Credentials>> getDefaultCredentialsSupplier();
 
    /**
     * Configuration Properties used when creating connections to this api

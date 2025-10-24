@@ -229,6 +229,7 @@ public class ContextBuilder {
       }
       this.identity = apiMetadata.getDefaultIdentity();
       this.credential = apiMetadata.getDefaultCredential().orNull();
+      this.credentialsSupplierOption = apiMetadata.getDefaultCredentialsSupplier();
       this.apiVersion = apiMetadata.getVersion();
       this.buildVersion = apiMetadata.getBuildVersion().or("");
    }
