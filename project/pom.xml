@@ -112,6 +112,17 @@
     </pluginRepository>
   </pluginRepositories>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>itemis-nexus</id>
+      <url>https://artifacts.itemis.cloud/repository/maven-snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>itemis-nexus</id>
+      <url>https://artifacts.itemis.cloud/repository/maven-releases</url>
+    </repository>
+  </distributionManagement>
+
   <developers>
     <developer>
       <name>Andrew Bayer</name>
