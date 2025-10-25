@@ -26,3 +26,4 @@ nbactions.xml
 /.nb-gradle/
 dependency-reduced-pom.xml
 .vscode
+.claude/settings.local.json
