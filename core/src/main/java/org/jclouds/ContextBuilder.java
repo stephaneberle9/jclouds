@@ -229,7 +229,6 @@ public class ContextBuilder {
       }
       this.identity = apiMetadata.getDefaultIdentity();
       this.credential = apiMetadata.getDefaultCredential().orNull();
-      this.credentialsSupplierOption = apiMetadata.getDefaultCredentialsSupplier();
       this.apiVersion = apiMetadata.getVersion();
       this.buildVersion = apiMetadata.getBuildVersion().or("");
    }
@@ -308,7 +307,7 @@ public class ContextBuilder {
             PROPERTY_API, PROPERTY_API_VERSION, PROPERTY_BUILD_VERSION);
 
       Set<String> optionalKeys;
-      if (credentialsSupplierOption.isPresent()) {
+      if (credentialsSupplierOption.isPresent() || apiMetadata.getDefaultCredentialsSupplier().isPresent()) {
          optionalKeys = ImmutableSet.of(PROPERTY_IDENTITY, PROPERTY_CREDENTIAL);
       } else if (!apiMetadata.getCredentialName().isPresent()) {
          optionalKeys = ImmutableSet.of(PROPERTY_CREDENTIAL);
@@ -333,16 +332,34 @@ public class ContextBuilder {
    }
 
    protected Supplier<Credentials> buildCredentialsSupplier(Properties expanded) {
-      Credentials creds = new Credentials(getAndRemove(expanded, PROPERTY_IDENTITY), getAndRemove(expanded,
-            PROPERTY_CREDENTIAL));
+      String expandedIdentity = getAndRemove(expanded, PROPERTY_IDENTITY);
+      String expandedCredential = getAndRemove(expanded, PROPERTY_CREDENTIAL);
+      Credentials expandedCreds = new Credentials(expandedIdentity, expandedCredential);
 
-      Supplier<Credentials> credentialsSupplier;
+      // Priority 1: Credentials supplier set via credentialsSupplier() builder method
       if (credentialsSupplierOption.isPresent()) {
-         credentialsSupplier = credentialsSupplierOption.get();
-      } else {
-         credentialsSupplier = Suppliers.ofInstance(creds);
+         return credentialsSupplierOption.get();
       }
-      return credentialsSupplier;
+
+      // Check if expanded credentials differ from API metadata defaults
+      String metadataIdentity = apiMetadata.getDefaultIdentity().orNull();
+      String metadataCredential = apiMetadata.getDefaultCredential().orNull();
+      boolean credentialsWereOverridden = !Objects.equal(expandedIdentity, metadataIdentity) ||
+                                           !Objects.equal(expandedCredential, metadataCredential);
+
+      // Priority 2: Static credentials from credentials() method, overrides, or system properties
+      if (credentialsWereOverridden) {
+         return Suppliers.ofInstance(expandedCreds);
+      }
+
+      // Priority 3: Credentials supplier from API metadata getDefaultCredentialsSupplier()
+      Optional<Supplier<Credentials>> metadataSupplier = apiMetadata.getDefaultCredentialsSupplier();
+      if (metadataSupplier.isPresent()) {
+         return metadataSupplier.get();
+      }
+
+      // Priority 4: Static credentials from API metadata getDefaultIdentity()/getDefaultCredential()
+      return Suppliers.ofInstance(expandedCreds);
    }
 
    private static String getAndRemove(Properties expanded, String key) {
