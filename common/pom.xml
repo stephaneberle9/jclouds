@@ -30,6 +30,7 @@
   <packaging>pom</packaging>
   <name>jclouds commons project</name>
   <modules>
+    <module>aws</module>
     <module>googlecloud</module>
     <module>openstack</module>
   </modules>

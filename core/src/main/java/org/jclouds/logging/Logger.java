@@ -73,10 +73,71 @@ public interface Logger {
 
    /**
     * Produces instances of {@link Logger} relevant to the specified category
-    * 
-    * 
+    *
+    *
     */
    public interface LoggerFactory {
       Logger getLogger(String category);
+   }
+
+   /**
+    * Helper method to get caller source location for logging.
+    * Returns a formatted string like "[org.jclouds.aws.s3.AWSCredentialsProvider:123]"
+    *
+    * @param stackOffset offset in the stack trace (0 = direct caller, 1 = caller's caller, etc.)
+    * @return formatted source location string
+    */
+   static String getSourceLocation(int stackOffset) {
+      StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+      // Index: 0=getStackTrace, 1=getSourceLocation, 2=calling method, 3+=actual callers
+      int index = 2 + stackOffset;
+      if (stackTrace.length > index) {
+         StackTraceElement caller = stackTrace[index];
+         return String.format("[%s:%d]", caller.getClassName(), caller.getLineNumber());
+      }
+      return "[unknown]";
+   }
+
+   /**
+    * Helper method to get caller source location for logging with default offset of 0.
+    * Returns a formatted string like "[org.jclouds.aws.s3.AWSCredentialsProvider:123]"
+    *
+    * @return formatted source location string
+    */
+   static String getSourceLocation() {
+      return getSourceLocation(0);
+   }
+
+   /**
+    * Helper method to get current timestamp in HH:mm:ss format.
+    *
+    * @return formatted timestamp string
+    */
+   static String getTimestamp() {
+      java.time.LocalTime now = java.time.LocalTime.now();
+      return String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond());
+   }
+
+   /**
+    * Formats a log message with timestamp and source location.
+    * Returns a string like "21:00:11 [org.jclouds.aws.s3.AWSCredentialsProvider:123]: message"
+    *
+    * @param message the log message
+    * @param stackOffset offset in the stack trace (typically 1 when called from logging method)
+    * @return formatted log message with timestamp and source location
+    */
+   static String formatWithContext(String message, int stackOffset) {
+      return getTimestamp() + " " + getSourceLocation(stackOffset + 1) + ": " + message;
+   }
+
+   /**
+    * Formats a log message with timestamp and source location using default stack offset.
+    * Returns a string like "21:00:11 [org.jclouds.aws.s3.AWSCredentialsProvider:123]: message"
+    *
+    * @param message the log message
+    * @return formatted log message with timestamp and source location
+    */
+   static String formatWithContext(String message) {
+      return formatWithContext(message, 0);
    }
 }

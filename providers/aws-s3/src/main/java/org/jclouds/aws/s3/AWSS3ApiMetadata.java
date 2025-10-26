@@ -16,12 +16,14 @@
  */
 package org.jclouds.aws.s3;
 
+import static org.jclouds.location.reference.LocationConstants.PROPERTY_REGION;
 import static org.jclouds.reflect.Reflection2.typeToken;
 import static org.jclouds.s3.reference.S3Constants.PROPERTY_S3_VIRTUAL_HOST_BUCKETS;
 import static org.jclouds.s3.reference.S3Constants.PROPERTY_SIGNER_VERSION;
 
 import java.util.Properties;
 
+import org.jclouds.aws.credentials.AWSCredentialsProvider;
 import org.jclouds.aws.s3.blobstore.AWSS3BlobStoreContext;
 import org.jclouds.aws.s3.blobstore.config.AWSS3BlobStoreContextModule;
 import org.jclouds.aws.s3.config.AWSS3HttpApiModule;
@@ -47,25 +49,29 @@ public class AWSS3ApiMetadata extends S3ApiMetadata {
    protected AWSS3ApiMetadata(Builder builder) {
       super(builder);
    }
-   
-   public static Properties defaultProperties() {
+
+   public static Properties defaultProperties(String region) {
       Properties properties = S3ApiMetadata.defaultProperties();
       properties.setProperty(PROPERTY_S3_VIRTUAL_HOST_BUCKETS, "true");
       properties.setProperty(PROPERTY_SIGNER_VERSION, "4");
+      properties.setProperty(PROPERTY_REGION, region);
       return properties;
    }
 
    public static class Builder extends S3ApiMetadata.Builder<AWSS3Client, Builder> {
+
       protected Builder() {
          super(AWSS3Client.class);
+         AWSCredentialsProvider awsCredentialsProvider = new AWSCredentialsProvider();
          id("aws-s3")
          .name("Amazon-specific S3 API")
          .defaultEndpoint("https://s3.amazonaws.com")
-         .defaultProperties(AWSS3ApiMetadata.defaultProperties())
+         .defaultCredentialsSupplier(awsCredentialsProvider.getCredentialsSupplier())
+         .defaultProperties(AWSS3ApiMetadata.defaultProperties(awsCredentialsProvider.getRegion()))
          .view(typeToken(AWSS3BlobStoreContext.class))
          .defaultModules(ImmutableSet.<Class<? extends Module>>of(AWSS3HttpApiModule.class, AWSS3BlobStoreContextModule.class));
       }
-      
+
       @Override
       public AWSS3ApiMetadata build() {
          return new AWSS3ApiMetadata(this);

@@ -45,6 +45,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.jclouds.common</groupId>
+      <artifactId>aws</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.jclouds.api</groupId>
       <artifactId>s3</artifactId>
       <version>${project.version}</version>
