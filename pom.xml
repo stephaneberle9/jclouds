@@ -34,6 +34,7 @@
     <module>core</module>
     <module>scriptbuilder</module>
     <module>blobstore</module>
+    <module>datasource</module>
     <module>compute</module>
     <module>loadbalancer</module>
     <module>common</module>
