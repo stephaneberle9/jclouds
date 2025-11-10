@@ -16,7 +16,10 @@
  */
 package org.jclouds.aws.rds.datasource;
 
+import jakarta.annotation.Resource;
+
 import org.jclouds.aws.rds.auth.RdsDbAuthTokenGenerator;
+import org.jclouds.logging.Logger;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.util.Credentials;
@@ -45,14 +48,19 @@ import com.zaxxer.hikari.util.Credentials;
  */
 public class RdsDataSource extends HikariDataSource {
 
+   @Resource
+   private Logger logger = Logger.NULL;
+
    private RdsDbAuthTokenGenerator authTokenGenerator;
 
    @Override
    public void setPassword(String password) {
       if (password == null || password.isEmpty()) {
+         logger.debug("Empty password provided - enabling IAM authentication mode");
          // Empty password triggers IAM authentication
          createAuthTokenGenerator();
       } else {
+         logger.debug("Static password provided - using standard password authentication");
          // Static password - use parent implementation
          super.setPassword(password);
       }
@@ -73,10 +81,13 @@ public class RdsDataSource extends HikariDataSource {
          // Generate fresh authentication token for IAM-based connection
          String username = getUsername();
          String jdbcUrl = getJdbcUrl();
+         logger.debug("Generating IAM authentication token for user '%s' connecting to '%s'", username, jdbcUrl);
          String token = authTokenGenerator.generateToken(jdbcUrl, username);
+         logger.debug("IAM authentication token generated successfully (token length: %d characters)", token.length());
          return Credentials.of(username, token);
       }
       // Fall back to static credentials
+      logger.debug("Using static password credentials for user '%s'", getUsername());
       return super.getCredentials();
    }
 }

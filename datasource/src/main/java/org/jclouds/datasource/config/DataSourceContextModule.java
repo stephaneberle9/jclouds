@@ -91,6 +91,10 @@ public class DataSourceContextModule extends AbstractModule {
       }
 
       HikariDataSource dataSource = createDataSource();
+
+      // Request Guice to inject members (including @Resource Logger) into the manually created DataSource
+      injector.injectMembers(dataSource);
+
       dataSource.setJdbcUrl(endpoint);
 
       // Configure credentials (can be overridden by subclasses for IAM auth, etc.)
