@@ -27,7 +27,7 @@
   </parent>
   <groupId>org.apache.jclouds</groupId>
   <artifactId>jclouds-project</artifactId>
-  <version>2.7.1-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
   <name>Apache jclouds Project</name>
   <url>https://jclouds.apache.org/</url>
@@ -221,6 +221,9 @@
   </developers>
 
   <properties>
+    <!-- CI-friendly version property -->
+    <revision>2.8.0-SNAPSHOT</revision>
+
     <jdk.version>11</jdk.version>
     <maven.compile.source>${jdk.version}</maven.compile.source>
     <maven.compile.target>${jdk.version}</maven.compile.target>
@@ -498,6 +501,32 @@
           <goals>deploy</goals>
           <arguments>-Pdoc -Papache-release ${arguments}</arguments>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <flattenMode>resolveCiFriendliesOnly</flattenMode>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
