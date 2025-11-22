@@ -310,7 +310,7 @@ DataSourceContext context = ContextBuilder.newBuilder("aws-rds")
 <dependency>
     <groupId>org.apache.jclouds.provider</groupId>
     <artifactId>aws-rds</artifactId>
-    <version>2.8.0-SNAPSHOT</version>
+    <version>2.8.0</version>
 </dependency>
 
 <!-- JDBC driver (choose based on your database) -->
