@@ -141,9 +141,24 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x mvnw
 
+      # Check if the version is a SNAPSHOT before deploying
+      - name: Check if version is snapshot
+        id: check-snapshot
+        run: |
+          VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ "$VERSION" == *-SNAPSHOT ]]; then
+            echo "is_snapshot=true" >> $GITHUB_OUTPUT
+            echo "✓ Version $VERSION is a SNAPSHOT - will deploy"
+          else
+            echo "is_snapshot=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Skipping snapshot deployment - version $VERSION is not a SNAPSHOT"
+          fi
+
       # Deploy without rebuilding - artifacts are already built
       # Skip javadoc/source generation since they're already in the repository
       - name: Deploy snapshot to Nexus
+        if: steps.check-snapshot.outputs.is_snapshot == 'true'
         env:
           MAVEN_USERNAME: ${{ secrets.ITEMIS_NEXUS_USER }}
           MAVEN_PASSWORD: ${{ secrets.ITEMIS_NEXUS_PASS }}
@@ -192,9 +207,39 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Deploying version: $VERSION"
 
+      # Verify the version is not a SNAPSHOT before deploying as release
+      - name: Check if version is release
+        id: check-release
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          POM_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+
+          echo "Tag version: $TAG_VERSION"
+          echo "POM version: $POM_VERSION"
+
+          # Check if POM version contains SNAPSHOT
+          if [[ "$POM_VERSION" == *-SNAPSHOT ]]; then
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "❌ ERROR: Cannot deploy as release - POM version $POM_VERSION is a SNAPSHOT"
+            echo "Please update pom.xml to a release version before tagging"
+            exit 1
+          fi
+
+          # Check if tag version matches POM version
+          if [[ "$TAG_VERSION" != "$POM_VERSION" ]]; then
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "❌ ERROR: Tag version ($TAG_VERSION) does not match POM version ($POM_VERSION)"
+            echo "Please ensure the tag matches the version in pom.xml"
+            exit 1
+          fi
+
+          echo "is_release=true" >> $GITHUB_OUTPUT
+          echo "✓ Version $TAG_VERSION is a release version - will deploy"
+
       # With CI-friendly Maven, just pass -Drevision to set the release version
       # No need for versions:set anymore - the flatten plugin handles it!
       - name: Deploy release to Nexus
+        if: steps.check-release.outputs.is_release == 'true'
         env:
           MAVEN_USERNAME: ${{ secrets.ITEMIS_NEXUS_USER }}
           MAVEN_PASSWORD: ${{ secrets.ITEMIS_NEXUS_PASS }}
