@@ -56,11 +56,21 @@ public class AzureDbAuthTokenGenerator {
     */
    public static AzureDbAuthTokenGenerator create() {
       // Build a credential chain that tries Workload Identity first, then falls back to DefaultAzureCredential
-      // This ensures AKS Workload Identity works when AZURE_FEDERATED_TOKEN_FILE is set
-      TokenCredential credential = new ChainedTokenCredentialBuilder()
-            .addLast(new WorkloadIdentityCredentialBuilder().build())
-            .addLast(new DefaultAzureCredentialBuilder().build())
-            .build();
+      // Only include WorkloadIdentityCredential if the required environment variables are set
+      ChainedTokenCredentialBuilder builder = new ChainedTokenCredentialBuilder();
+
+      // Check if Workload Identity environment variables are present
+      String clientId = System.getenv("AZURE_CLIENT_ID");
+      String tenantId = System.getenv("AZURE_TENANT_ID");
+      String tokenFile = System.getenv("AZURE_FEDERATED_TOKEN_FILE");
+
+      if (clientId != null && tenantId != null && tokenFile != null) {
+         builder.addLast(new WorkloadIdentityCredentialBuilder().build());
+      }
+
+      builder.addLast(new DefaultAzureCredentialBuilder().build());
+
+      TokenCredential credential = builder.build();
       return new AzureDbAuthTokenGenerator(credential);
    }
 
