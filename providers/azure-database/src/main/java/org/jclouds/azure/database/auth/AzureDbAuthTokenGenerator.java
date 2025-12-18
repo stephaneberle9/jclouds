@@ -18,7 +18,9 @@ package org.jclouds.azure.database.auth;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
+import com.azure.identity.ChainedTokenCredentialBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.identity.WorkloadIdentityCredentialBuilder;
 
 /**
  * Generates authentication tokens for connecting to an Azure Database using Entra ID credentials.
@@ -47,12 +49,18 @@ public class AzureDbAuthTokenGenerator {
    private final TokenCredential credential;
 
    /**
-    * Creates a new token generator using DefaultAzureCredential.
+    * Creates a new token generator using a chain of Azure credentials.
+    * The chain tries WorkloadIdentityCredential first (for AKS), then falls back to DefaultAzureCredential.
     *
     * @return a new AzureDbAuthTokenGenerator instance
     */
    public static AzureDbAuthTokenGenerator create() {
-      TokenCredential credential = new DefaultAzureCredentialBuilder().build();
+      // Build a credential chain that tries Workload Identity first, then falls back to DefaultAzureCredential
+      // This ensures AKS Workload Identity works when AZURE_FEDERATED_TOKEN_FILE is set
+      TokenCredential credential = new ChainedTokenCredentialBuilder()
+            .addLast(new WorkloadIdentityCredentialBuilder().build())
+            .addLast(new DefaultAzureCredentialBuilder().build())
+            .build();
       return new AzureDbAuthTokenGenerator(credential);
    }
 

@@ -31,7 +31,7 @@
   <description>Azure Database for PostgreSQL/MySQL implementation with Entra ID authentication support</description>
 
   <properties>
-    <azure.sdk.version>1.2.29</azure.sdk.version>
+    <azure.sdk.version>1.2.31</azure.sdk.version>
   </properties>
 
   <dependencyManagement>
