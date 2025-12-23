@@ -117,7 +117,7 @@ public class DataSourceContextModule extends AbstractModule {
          protected org.jclouds.datasource.auth.DbAuthTokenGenerator createAuthTokenGenerator() {
             throw new UnsupportedOperationException(
                   "Token-based authentication not supported by default DataSourceContextModule. " +
-                  "Use a provider-specific module (e.g., AWSRdsContextModule, AzureDatabaseContextModule) " +
+                  "Use a provider-specific module (e.g., AWSRdsContextModule, AzureDatabasesContextModule) " +
                   "for IAM/Entra ID authentication.");
          }
       };
