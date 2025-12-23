@@ -26,9 +26,9 @@
     <relativePath>../../project/pom.xml</relativePath>
   </parent>
   <groupId>org.apache.jclouds.provider</groupId>
-  <artifactId>azure-database</artifactId>
-  <name>jclouds Azure Database provider</name>
-  <description>Azure Database for PostgreSQL/MySQL implementation with Entra ID authentication support</description>
+  <artifactId>azuredatabases</artifactId>
+  <name>jclouds Azure Databases provider</name>
+  <description>Azure Databases for PostgreSQL/MySQL implementation with Entra ID authentication support</description>
 
   <properties>
     <azure.sdk.version>1.2.38</azure.sdk.version>

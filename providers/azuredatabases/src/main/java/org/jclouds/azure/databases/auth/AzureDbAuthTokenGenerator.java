@@ -14,7 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jclouds.azure.database.auth;
+package org.jclouds.azure.databases.auth;
+
+import org.jclouds.datasource.auth.DbAuthTokenGenerator;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
@@ -26,7 +28,7 @@ import com.azure.identity.WorkloadIdentityCredentialBuilder;
  * Generates authentication tokens for connecting to an Azure Database using Entra ID credentials.
  *
  * <p>This utility class creates authentication tokens that can be used instead
- * of passwords when connecting to Azure Database for PostgreSQL/MySQL with Entra ID authentication enabled.
+ * of passwords when connecting to Azure Databases for PostgreSQL/MySQL with Entra ID authentication enabled.
  *
  * <p>The tokens are typically valid for 1 hour and should be regenerated for each
  * new connection.
@@ -42,7 +44,7 @@ import com.azure.identity.WorkloadIdentityCredentialBuilder;
  *   <li>IntelliJ, VS Code, etc.</li>
  * </ul>
  */
-public class AzureDbAuthTokenGenerator {
+public class AzureDbAuthTokenGenerator implements DbAuthTokenGenerator {
 
    private static final String AZURE_OSSRDBMS_SCOPE = "https://ossrdbms-aad.database.windows.net/.default";
 
@@ -88,10 +90,11 @@ public class AzureDbAuthTokenGenerator {
     *
     * <p>The token is obtained by requesting an access token for the Azure OSS RDBMS scope
     * (https://ossrdbms-aad.database.windows.net/.default) which is the required scope
-    * for Azure Database for PostgreSQL and MySQL Entra ID authentication.
+    * for Azure Databases for PostgreSQL and MySQL Entra ID authentication.
     *
     * @return authentication token valid for approximately 1 hour
     */
+   @Override
    public String generateToken() {
       TokenRequestContext request = new TokenRequestContext().addScopes(AZURE_OSSRDBMS_SCOPE);
       return credential.getTokenSync(request).getToken();

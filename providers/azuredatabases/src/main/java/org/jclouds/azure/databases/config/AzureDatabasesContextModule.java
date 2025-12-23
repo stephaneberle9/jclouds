@@ -14,35 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jclouds.azure.database.config;
+package org.jclouds.azure.databases.config;
 
-import org.jclouds.azure.database.datasource.AzureDatabaseDataSource;
+import org.jclouds.azure.databases.datasource.AzureDatabasesDataSource;
 import org.jclouds.datasource.config.DataSourceContextModule;
 
-import com.zaxxer.hikari.HikariDataSource;
-
 /**
- * Guice module for configuring Azure Database context with support for Entra ID authentication.
+ * Guice module for configuring Azure Databases context with support for Entra ID authentication.
  *
- * <p>This module extends the generic DataSource module to provide Azure Database-specific
+ * <p>This module extends the generic DataSource module to provide Azure Databases-specific
  * functionality including support for Entra ID authentication via dynamic token generation.
  *
- * <p>The AzureDatabaseDataSource automatically detects when Entra ID authentication should be used
+ * <p>The AzureDatabasesDataSource automatically detects when Entra ID authentication should be used
  * (when no password is provided) and generates authentication tokens on-demand.
  */
-public class AzureDatabaseContextModule extends DataSourceContextModule {
+public class AzureDatabasesContextModule extends DataSourceContextModule {
 
    @Override
-   protected HikariDataSource createDataSource() {
-      return new AzureDatabaseDataSource();
+   protected org.jclouds.datasource.DataSource createDataSource() {
+      return new AzureDatabasesDataSource();
    }
 
    @Override
-   protected void configureConnectionPool(HikariDataSource dataSource,
+   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       super.configureConnectionPool(dataSource, maxPoolSize, minIdle, connectionTimeout, maxLifetime, idleTimeout);
       // Override pool name for Azure-specific pool
-      dataSource.setPoolName("jclouds-azure-database-pool");
+      dataSource.setPoolName("jclouds-azuredatabases-pool");
    }
 }

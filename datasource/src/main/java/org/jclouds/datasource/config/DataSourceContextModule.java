@@ -28,7 +28,6 @@ import javax.sql.DataSource;
 import org.jclouds.datasource.DataSourceContext;
 import org.jclouds.datasource.internal.DataSourceContextImpl;
 
-import com.zaxxer.hikari.HikariDataSource;
 import org.jclouds.domain.Credentials;
 import org.jclouds.location.Provider;
 import org.jclouds.providers.ProviderMetadata;
@@ -50,7 +49,7 @@ public class DataSourceContextModule extends AbstractModule {
 
    @Provides
    @Singleton
-   protected DataSourceContext provideDataSourceContext(DataSource dataSource) {
+   protected DataSourceContext provideDataSourceContext(javax.sql.DataSource dataSource) {
       return createDataSourceContext(dataSource);
    }
 
@@ -61,13 +60,13 @@ public class DataSourceContextModule extends AbstractModule {
     * @param dataSource the DataSource to wrap
     * @return a new DataSourceContext instance
     */
-   protected DataSourceContext createDataSourceContext(DataSource dataSource) {
+   protected DataSourceContext createDataSourceContext(javax.sql.DataSource dataSource) {
       return new DataSourceContextImpl(dataSource);
    }
 
    @Provides
    @Singleton
-   protected DataSource provideDataSource(
+   protected javax.sql.DataSource provideDataSource(
          @Provider Supplier<Credentials> creds,
          ProviderMetadata providerMetadata,
          Injector injector) {
@@ -90,7 +89,7 @@ public class DataSourceContextModule extends AbstractModule {
          endpoint = providerMetadata.getApiMetadata().getDefaultEndpoint().orNull();
       }
 
-      HikariDataSource dataSource = createDataSource();
+      org.jclouds.datasource.DataSource dataSource = createDataSource();
 
       // Request Guice to inject members (including @Resource Logger) into the manually created DataSource
       injector.injectMembers(dataSource);
@@ -110,10 +109,18 @@ public class DataSourceContextModule extends AbstractModule {
     * Creates the DataSource instance. Can be overridden by subclasses to provide
     * a custom DataSource implementation.
     *
-    * @return a new HikariDataSource instance
+    * @return a new DataSource instance
     */
-   protected HikariDataSource createDataSource() {
-      return new HikariDataSource();
+   protected org.jclouds.datasource.DataSource createDataSource() {
+      return new org.jclouds.datasource.DataSource() {
+         @Override
+         protected org.jclouds.datasource.auth.DbAuthTokenGenerator createAuthTokenGenerator() {
+            throw new UnsupportedOperationException(
+                  "Token-based authentication not supported by default DataSourceContextModule. " +
+                  "Use a provider-specific module (e.g., AWSRdsContextModule, AzureDatabaseContextModule) " +
+                  "for IAM/Entra ID authentication.");
+         }
+      };
    }
 
    /**
@@ -125,7 +132,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param credentials the credentials (username and password)
     * @param endpoint the JDBC endpoint URL
     */
-   protected void configureCredentials(HikariDataSource dataSource, Credentials credentials, String endpoint) {
+   protected void configureCredentials(org.jclouds.datasource.DataSource dataSource, Credentials credentials, String endpoint) {
       // Set static credentials (username and password)
       dataSource.setUsername(credentials.identity);
       dataSource.setPassword(credentials.credential);
@@ -141,7 +148,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param maxLifetime maximum connection lifetime in milliseconds
     * @param idleTimeout idle connection timeout in milliseconds
     */
-   protected void configureConnectionPool(HikariDataSource dataSource,
+   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       // Properties are retrieved from ApiMetadata defaults or user overrides

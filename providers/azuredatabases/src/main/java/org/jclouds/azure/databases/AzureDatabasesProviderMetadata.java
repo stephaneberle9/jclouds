@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jclouds.azure.database;
+package org.jclouds.azure.databases;
 
 import java.net.URI;
 
@@ -24,10 +24,10 @@ import org.jclouds.providers.internal.BaseProviderMetadata;
 import com.google.auto.service.AutoService;
 
 /**
- * Implementation of {@link ProviderMetadata} for Azure Database with Entra ID authentication.
+ * Implementation of {@link ProviderMetadata} for Azure Databases with Entra ID authentication.
  */
 @AutoService(ProviderMetadata.class)
-public class AzureDatabaseProviderMetadata extends BaseProviderMetadata {
+public class AzureDatabasesProviderMetadata extends BaseProviderMetadata {
 
    public static Builder builder() {
       return new Builder();
@@ -38,23 +38,23 @@ public class AzureDatabaseProviderMetadata extends BaseProviderMetadata {
       return builder().fromProviderMetadata(this);
    }
 
-   public AzureDatabaseProviderMetadata() {
+   public AzureDatabasesProviderMetadata() {
       super(builder());
    }
 
-   public AzureDatabaseProviderMetadata(Builder builder) {
+   public AzureDatabasesProviderMetadata(Builder builder) {
       super(builder);
    }
 
    public static class Builder extends BaseProviderMetadata.Builder {
 
       protected Builder() {
-         id("azure-database")
-         .name("Azure Database for PostgreSQL/MySQL")
-         .apiMetadata(new AzureDatabaseApiMetadata())
+         id("azuredatabases")
+         .name("Azure Databases for PostgreSQL/MySQL")
+         .apiMetadata(new AzureDatabasesApiMetadata())
          .homepage(URI.create("https://azure.microsoft.com/en-us/products/category/databases"))
          .console(URI.create("https://portal.azure.com/#browse/Microsoft.DBforPostgreSQL%2Fservers"))
-         .linkedServices("azurecompute-arm", "azureblob", "azure-database")
+         .linkedServices("azurecompute-arm", "azureblob", "azuredatabases")
          .iso3166Codes("US", "US-VA", "US-CA", "US-TX", "US-AZ", "US-WA",
                "CA", "CA-QC", "BR-SP",
                "IE", "GB-LND", "FR-IDF", "DE-HE", "NL", "SE", "NO", "CH", "PL",
@@ -63,8 +63,8 @@ public class AzureDatabaseProviderMetadata extends BaseProviderMetadata {
       }
 
       @Override
-      public AzureDatabaseProviderMetadata build() {
-         return new AzureDatabaseProviderMetadata(this);
+      public AzureDatabasesProviderMetadata build() {
+         return new AzureDatabasesProviderMetadata(this);
       }
 
       @Override

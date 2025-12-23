@@ -18,6 +18,8 @@ package org.jclouds.aws.rds.auth;
 
 import java.net.URI;
 
+import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -111,5 +113,38 @@ public class RdsDbAuthTokenGenerator {
       // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
       String uriString = jdbcUrl.substring(5);
       return URI.create(uriString);
+   }
+
+   /**
+    * Creates a DbAuthTokenGenerator adapter that captures jdbcUrl and username
+    * for RDS token generation.
+    *
+    * @param jdbcUrl JDBC URL for the RDS database
+    * @param username database username
+    * @return a DbAuthTokenGenerator that generates RDS IAM authentication tokens
+    */
+   public DbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
+      return new RdsDbAuthTokenAdapter(this, jdbcUrl, username);
+   }
+
+   /**
+    * Adapter that implements DbAuthTokenGenerator for RDS by capturing
+    * the JDBC URL and username required for token generation.
+    */
+   private static class RdsDbAuthTokenAdapter implements DbAuthTokenGenerator {
+      private final RdsDbAuthTokenGenerator generator;
+      private final String jdbcUrl;
+      private final String username;
+
+      RdsDbAuthTokenAdapter(RdsDbAuthTokenGenerator generator, String jdbcUrl, String username) {
+         this.generator = generator;
+         this.jdbcUrl = jdbcUrl;
+         this.username = username;
+      }
+
+      @Override
+      public String generateToken() {
+         return generator.generateToken(jdbcUrl, username);
+      }
    }
 }

@@ -19,8 +19,6 @@ package org.jclouds.aws.rds.config;
 import org.jclouds.aws.rds.datasource.RdsDataSource;
 import org.jclouds.datasource.config.DataSourceContextModule;
 
-import com.zaxxer.hikari.HikariDataSource;
-
 /**
  * Guice module for configuring AWS RDS context with support for IAM authentication.
  *
@@ -33,12 +31,12 @@ import com.zaxxer.hikari.HikariDataSource;
 public class AWSRdsContextModule extends DataSourceContextModule {
 
    @Override
-   protected HikariDataSource createDataSource() {
+   protected org.jclouds.datasource.DataSource createDataSource() {
       return new RdsDataSource();
    }
 
    @Override
-   protected void configureConnectionPool(HikariDataSource dataSource,
+   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       super.configureConnectionPool(dataSource, maxPoolSize, minIdle, connectionTimeout, maxLifetime, idleTimeout);
