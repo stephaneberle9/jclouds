@@ -35,20 +35,25 @@ import software.amazon.awssdk.services.rds.RdsUtilities;
  * <p>The tokens are valid for 15 minutes and should be regenerated for each
  * new connection.
  */
-public class RdsDbAuthTokenGenerator {
+public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
 
    private RdsUtilities rdsUtilities;
    private Region region;
    private final AwsCredentialsProvider credentialsProvider;
+   private final URI uri;
+   private final String username;
 
    /**
-    * Creates a new token generator using default AWS credentials and region.
+    * Creates a new token generator for a specific connection using default AWS credentials and region.
     * Region detection is deferred until the first token generation request.
     *
+    * @param jdbcUrl JDBC URL (e.g., "jdbc:mysql://mydb.us-east-1.rds.amazonaws.com:3306/mydb")
+    * @param username database username
     * @return a new RdsDbAuthTokenGenerator instance
     */
-   public static RdsDbAuthTokenGenerator create() {
-      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), null);
+   public static RdsDbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
+      URI uri = parseJdbcUrl(jdbcUrl);
+      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), null, uri, username);
    }
 
    /**
@@ -56,10 +61,14 @@ public class RdsDbAuthTokenGenerator {
     *
     * @param credentialsProvider AWS credentials provider
     * @param region AWS region (can be null to use default region provider chain)
+    * @param uri parsed URI from JDBC URL
+    * @param username database username
     */
-   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, Region region) {
+   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, Region region, URI uri, String username) {
       this.credentialsProvider = credentialsProvider;
       this.region = region;
+      this.uri = uri;
+      this.username = username;
    }
 
    /**
@@ -83,17 +92,14 @@ public class RdsDbAuthTokenGenerator {
    /**
     * Generates an authentication token for connecting to an AWS RDS database using IAM credentials.
     *
-    * @param jdbcUrl JDBC URL (e.g., "jdbc:mysql://mydb.us-east-1.rds.amazonaws.com:3306/mydb")
-    * @param username database username
     * @return authentication token valid for 15 minutes
     */
-   public String generateToken(String jdbcUrl, String username) {
+   @Override
+   public String generateToken() {
       // Ensure RdsUtilities is initialized (lazy initialization)
       if (rdsUtilities == null) {
          initializeRdsUtilities();
       }
-
-      URI uri = parseJdbcUrl(jdbcUrl);
 
       return rdsUtilities.generateAuthenticationToken(builder -> builder
               .hostname(uri.getHost())
@@ -108,43 +114,11 @@ public class RdsDbAuthTokenGenerator {
     * @param jdbcUrl JDBC URL
     * @return URI with host and port information
     */
-   protected URI parseJdbcUrl(String jdbcUrl) {
+   protected static URI parseJdbcUrl(String jdbcUrl) {
       // Remove "jdbc:" prefix to get a standard URI
       // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
       String uriString = jdbcUrl.substring(5);
       return URI.create(uriString);
    }
 
-   /**
-    * Creates a DbAuthTokenGenerator adapter that captures jdbcUrl and username
-    * for RDS token generation.
-    *
-    * @param jdbcUrl JDBC URL for the RDS database
-    * @param username database username
-    * @return a DbAuthTokenGenerator that generates RDS IAM authentication tokens
-    */
-   public DbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
-      return new RdsDbAuthTokenAdapter(this, jdbcUrl, username);
-   }
-
-   /**
-    * Adapter that implements DbAuthTokenGenerator for RDS by capturing
-    * the JDBC URL and username required for token generation.
-    */
-   private static class RdsDbAuthTokenAdapter implements DbAuthTokenGenerator {
-      private final RdsDbAuthTokenGenerator generator;
-      private final String jdbcUrl;
-      private final String username;
-
-      RdsDbAuthTokenAdapter(RdsDbAuthTokenGenerator generator, String jdbcUrl, String username) {
-         this.generator = generator;
-         this.jdbcUrl = jdbcUrl;
-         this.username = username;
-      }
-
-      @Override
-      public String generateToken() {
-         return generator.generateToken(jdbcUrl, username);
-      }
-   }
 }

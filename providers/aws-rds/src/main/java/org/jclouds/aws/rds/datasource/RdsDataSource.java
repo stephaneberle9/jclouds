@@ -45,7 +45,6 @@ public class RdsDataSource extends org.jclouds.datasource.DataSource {
 
    @Override
    protected DbAuthTokenGenerator createAuthTokenGenerator() {
-      RdsDbAuthTokenGenerator generator = RdsDbAuthTokenGenerator.create();
-      return generator.forConnection(getJdbcUrl(), getUsername());
+      return RdsDbAuthTokenGenerator.forConnection(getJdbcUrl(), getUsername());
    }
 }
