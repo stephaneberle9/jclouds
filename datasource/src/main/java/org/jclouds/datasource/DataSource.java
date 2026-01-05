@@ -65,6 +65,7 @@ public abstract class DataSource extends HikariDataSource {
       } else {
          logger.debug("Static password provided - using standard password authentication");
          // Static password - use parent implementation
+         this.authTokenGenerator = null;
          super.setPassword(password);
       }
    }
