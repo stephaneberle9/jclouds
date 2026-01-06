@@ -149,7 +149,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param maxLifetime maximum connection lifetime in milliseconds
     * @param idleTimeout idle connection timeout in milliseconds
     */
-   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
+   protected void configureConnectionPool (DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       // Properties are retrieved from ApiMetadata defaults or user overrides

@@ -73,15 +73,15 @@ public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
     * Creates a new token generator with specific credentials provider and region.
     *
     * @param credentialsProvider AWS credentials provider
-    * @param region AWS region (can be null to use default region provider chain)
     * @param uri parsed URI from JDBC URL
     * @param username database username
+    * @param region AWS region (can be null to use default region provider chain)
     */
-   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, Region region, URI uri, String username) {
+   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, URI uri, String username, Region region) {
       this.credentialsProvider = credentialsProvider;
-      this.region = region;
       this.uri = uri;
       this.username = username;
+      this.region = region;
    }
 
    /**
