@@ -18,6 +18,7 @@ package org.jclouds.azure.databases.config;
 
 import org.jclouds.azure.databases.datasource.AzureDatabasesDataSource;
 import org.jclouds.datasource.config.DataSourceContextModule;
+import org.jclouds.datasource.DataSource;
 
 /**
  * Guice module for configuring Azure Databases context with support for Entra ID authentication.
@@ -31,12 +32,12 @@ import org.jclouds.datasource.config.DataSourceContextModule;
 public class AzureDatabasesContextModule extends DataSourceContextModule {
 
    @Override
-   protected org.jclouds.datasource.DataSource createDataSource() {
+   protected DataSource createDataSource() {
       return new AzureDatabasesDataSource();
    }
 
    @Override
-   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
+   protected void configureConnectionPool(DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       super.configureConnectionPool(dataSource, maxPoolSize, minIdle, connectionTimeout, maxLifetime, idleTimeout);

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 package org.jclouds.aws.rds.config;
-
 import org.jclouds.aws.rds.datasource.RdsDataSource;
 import org.jclouds.datasource.config.DataSourceContextModule;
+import org.jclouds.datasource.DataSource;
 
 /**
  * Guice module for configuring AWS RDS context with support for IAM authentication.
@@ -31,12 +31,12 @@ import org.jclouds.datasource.config.DataSourceContextModule;
 public class AWSRdsContextModule extends DataSourceContextModule {
 
    @Override
-   protected org.jclouds.datasource.DataSource createDataSource() {
+   protected DataSource createDataSource() {
       return new RdsDataSource();
    }
 
    @Override
-   protected void configureConnectionPool(org.jclouds.datasource.DataSource dataSource,
+   protected void configureConnectionPool(DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       super.configureConnectionPool(dataSource, maxPoolSize, minIdle, connectionTimeout, maxLifetime, idleTimeout);

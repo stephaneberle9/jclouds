@@ -38,10 +38,10 @@ import software.amazon.awssdk.services.rds.RdsUtilities;
 public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
 
    private RdsUtilities rdsUtilities;
-   private Region region;
    private final AwsCredentialsProvider credentialsProvider;
    private final URI uri;
    private final String username;
+   private Region region;
 
    /**
     * Creates a new token generator for a specific connection using default AWS credentials and region.
@@ -54,6 +54,19 @@ public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
    public static RdsDbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
       URI uri = parseJdbcUrl(jdbcUrl);
       return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), null, uri, username);
+   }
+
+   /**
+    * Parses a JDBC URL to extract the hostname and port.
+    *
+    * @param jdbcUrl JDBC URL
+    * @return URI with host and port information
+    */
+   protected static URI parseJdbcUrl(String jdbcUrl) {
+      // Remove "jdbc:" prefix to get a standard URI
+      // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
+      String uriString = jdbcUrl.substring(5);
+      return URI.create(uriString);
    }
 
    /**
@@ -107,18 +120,4 @@ public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
               .username(username)
               .region(region));
    }
-
-   /**
-    * Parses a JDBC URL to extract the hostname and port.
-    *
-    * @param jdbcUrl JDBC URL
-    * @return URI with host and port information
-    */
-   protected static URI parseJdbcUrl(String jdbcUrl) {
-      // Remove "jdbc:" prefix to get a standard URI
-      // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
-      String uriString = jdbcUrl.substring(5);
-      return URI.create(uriString);
-   }
-
 }

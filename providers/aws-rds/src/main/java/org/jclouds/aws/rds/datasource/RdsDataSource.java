@@ -18,6 +18,7 @@ package org.jclouds.aws.rds.datasource;
 
 import org.jclouds.aws.rds.auth.RdsDbAuthTokenGenerator;
 import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+import org.jclouds.datasource.DataSource;
 
 /**
  * HikariCP DataSource for AWS RDS with support for IAM authentication.
@@ -41,7 +42,7 @@ import org.jclouds.datasource.auth.DbAuthTokenGenerator;
  * ds.setPassword(null);  // or empty string - triggers IAM auth
  * </pre>
  */
-public class RdsDataSource extends org.jclouds.datasource.DataSource {
+public class RdsDataSource extends DataSource {
 
    @Override
    protected DbAuthTokenGenerator createAuthTokenGenerator() {

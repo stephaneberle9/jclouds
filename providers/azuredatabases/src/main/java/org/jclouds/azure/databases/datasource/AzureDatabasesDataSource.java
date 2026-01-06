@@ -18,6 +18,7 @@ package org.jclouds.azure.databases.datasource;
 
 import org.jclouds.azure.databases.auth.AzureDbAuthTokenGenerator;
 import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+import org.jclouds.datasource.DataSource;
 
 /**
  * HikariCP DataSource for Azure Databases with support for Entra ID authentication.
@@ -41,7 +42,7 @@ import org.jclouds.datasource.auth.DbAuthTokenGenerator;
  * ds.setPassword(null);  // or empty string - triggers Entra ID auth
  * </pre>
  */
-public class AzureDatabasesDataSource extends org.jclouds.datasource.DataSource {
+public class AzureDatabasesDataSource extends DataSource {
 
    @Override
    protected DbAuthTokenGenerator createAuthTokenGenerator() {
