@@ -23,8 +23,9 @@ import static org.jclouds.datasource.reference.DataSourceConstants.PROPERTY_DATA
 import static org.jclouds.datasource.reference.DataSourceConstants.PROPERTY_DATASOURCE_MIN_IDLE;
 
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 
+import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+import org.jclouds.datasource.DataSource;
 import org.jclouds.datasource.DataSourceContext;
 import org.jclouds.datasource.internal.DataSourceContextImpl;
 
@@ -89,7 +90,7 @@ public class DataSourceContextModule extends AbstractModule {
          endpoint = providerMetadata.getApiMetadata().getDefaultEndpoint().orNull();
       }
 
-      org.jclouds.datasource.DataSource dataSource = createDataSource();
+      DataSource dataSource = createDataSource();
 
       // Request Guice to inject members (including @Resource Logger) into the manually created DataSource
       injector.injectMembers(dataSource);
@@ -111,10 +112,10 @@ public class DataSourceContextModule extends AbstractModule {
     *
     * @return a new DataSource instance
     */
-   protected org.jclouds.datasource.DataSource createDataSource() {
-      return new org.jclouds.datasource.DataSource() {
+   protected DataSource createDataSource() {
+      return new DataSource() {
          @Override
-         protected org.jclouds.datasource.auth.DbAuthTokenGenerator createAuthTokenGenerator() {
+         protected DbAuthTokenGenerator createAuthTokenGenerator() {
             throw new UnsupportedOperationException(
                   "Token-based authentication not supported by default DataSourceContextModule. " +
                   "Use a provider-specific module (e.g., AWSRdsContextModule, AzureDatabasesContextModule) " +
@@ -132,7 +133,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param credentials the credentials (username and password)
     * @param endpoint the JDBC endpoint URL
     */
-   protected void configureCredentials(org.jclouds.datasource.DataSource dataSource, Credentials credentials, String endpoint) {
+   protected void configureCredentials(DataSource dataSource, Credentials credentials, String endpoint) {
       // Set static credentials (username and password)
       dataSource.setUsername(credentials.identity);
       dataSource.setPassword(credentials.credential);
