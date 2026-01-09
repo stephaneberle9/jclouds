@@ -53,7 +53,7 @@ public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
     */
    public static RdsDbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
       URI uri = parseJdbcUrl(jdbcUrl);
-      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), null, uri, username);
+      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), uri, username, null);
    }
 
    /**
