@@ -16,12 +16,13 @@
  */
 package org.jclouds.datasource.config;
 
+import org.jclouds.datasource.DataSource;
+import org.jclouds.datasource.DataSourceContext;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import org.testng.annotations.Test;
-
-import com.zaxxer.hikari.HikariDataSource;
 
 @Test(groups = "unit", testName = "DataSourceContextModuleTest")
 public class DataSourceContextModuleTest {
@@ -31,9 +32,8 @@ public class DataSourceContextModuleTest {
       // Test that template methods can be called
       DataSourceContextModule module = new DataSourceContextModule();
 
-      HikariDataSource ds = module.createDataSource();
+      DataSource ds = module.createDataSource();
       assertNotNull(ds);
-      assertEquals(ds.getClass(), HikariDataSource.class);
 
       // Test configureCredentials
       org.jclouds.domain.Credentials creds = new org.jclouds.domain.Credentials("user", "pass");
@@ -52,7 +52,7 @@ public class DataSourceContextModuleTest {
       // Test that subclasses can override provideDataSourceContext()
       class CustomDataSourceContextModule extends DataSourceContextModule {
          @Override
-         protected org.jclouds.datasource.DataSourceContext provideDataSourceContext(javax.sql.DataSource dataSource) {
+         protected DataSourceContext provideDataSourceContext(javax.sql.DataSource dataSource) {
             // Override provides method
             return super.provideDataSourceContext(dataSource);
          }

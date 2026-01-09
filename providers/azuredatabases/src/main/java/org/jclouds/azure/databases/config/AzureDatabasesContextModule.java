@@ -14,25 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jclouds.aws.rds.config;
-import org.jclouds.aws.rds.datasource.RdsDataSource;
+package org.jclouds.azure.databases.config;
+
+import org.jclouds.azure.databases.datasource.AzureDatabasesDataSource;
 import org.jclouds.datasource.config.DataSourceContextModule;
 import org.jclouds.datasource.DataSource;
 
 /**
- * Guice module for configuring AWS RDS context with support for IAM authentication.
+ * Guice module for configuring Azure Databases context with support for Entra ID authentication.
  *
- * <p>This module extends the generic DataSource module to provide AWS RDS-specific
- * functionality including support for IAM authentication via dynamic token generation.
+ * <p>This module extends the generic DataSource module to provide Azure Databases-specific
+ * functionality including support for Entra ID authentication via dynamic token generation.
  *
- * <p>The RdsDataSource automatically detects when IAM authentication should be used
+ * <p>The AzureDatabasesDataSource automatically detects when Entra ID authentication should be used
  * (when no password is provided) and generates authentication tokens on-demand.
  */
-public class AWSRdsContextModule extends DataSourceContextModule {
+public class AzureDatabasesContextModule extends DataSourceContextModule {
 
    @Override
    protected DataSource createDataSource() {
-      return new RdsDataSource();
+      return new AzureDatabasesDataSource();
    }
 
    @Override
@@ -40,7 +41,7 @@ public class AWSRdsContextModule extends DataSourceContextModule {
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       super.configureConnectionPool(dataSource, maxPoolSize, minIdle, connectionTimeout, maxLifetime, idleTimeout);
-      // Override pool name for AWS-specific pool
-      dataSource.setPoolName("jclouds-aws-rds-pool");
+      // Override pool name for Azure-specific pool
+      dataSource.setPoolName("jclouds-azuredatabases-pool");
    }
 }

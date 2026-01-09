@@ -23,12 +23,12 @@ import static org.jclouds.datasource.reference.DataSourceConstants.PROPERTY_DATA
 import static org.jclouds.datasource.reference.DataSourceConstants.PROPERTY_DATASOURCE_MIN_IDLE;
 
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 
+import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+import org.jclouds.datasource.DataSource;
 import org.jclouds.datasource.DataSourceContext;
 import org.jclouds.datasource.internal.DataSourceContextImpl;
 
-import com.zaxxer.hikari.HikariDataSource;
 import org.jclouds.domain.Credentials;
 import org.jclouds.location.Provider;
 import org.jclouds.providers.ProviderMetadata;
@@ -50,7 +50,7 @@ public class DataSourceContextModule extends AbstractModule {
 
    @Provides
    @Singleton
-   protected DataSourceContext provideDataSourceContext(DataSource dataSource) {
+   protected DataSourceContext provideDataSourceContext(javax.sql.DataSource dataSource) {
       return createDataSourceContext(dataSource);
    }
 
@@ -61,13 +61,13 @@ public class DataSourceContextModule extends AbstractModule {
     * @param dataSource the DataSource to wrap
     * @return a new DataSourceContext instance
     */
-   protected DataSourceContext createDataSourceContext(DataSource dataSource) {
+   protected DataSourceContext createDataSourceContext(javax.sql.DataSource dataSource) {
       return new DataSourceContextImpl(dataSource);
    }
 
    @Provides
    @Singleton
-   protected DataSource provideDataSource(
+   protected javax.sql.DataSource provideDataSource(
          @Provider Supplier<Credentials> creds,
          ProviderMetadata providerMetadata,
          Injector injector) {
@@ -90,7 +90,7 @@ public class DataSourceContextModule extends AbstractModule {
          endpoint = providerMetadata.getApiMetadata().getDefaultEndpoint().orNull();
       }
 
-      HikariDataSource dataSource = createDataSource();
+      DataSource dataSource = createDataSource();
 
       // Request Guice to inject members (including @Resource Logger) into the manually created DataSource
       injector.injectMembers(dataSource);
@@ -110,10 +110,18 @@ public class DataSourceContextModule extends AbstractModule {
     * Creates the DataSource instance. Can be overridden by subclasses to provide
     * a custom DataSource implementation.
     *
-    * @return a new HikariDataSource instance
+    * @return a new DataSource instance
     */
-   protected HikariDataSource createDataSource() {
-      return new HikariDataSource();
+   protected DataSource createDataSource() {
+      return new DataSource() {
+         @Override
+         protected DbAuthTokenGenerator createAuthTokenGenerator() {
+            throw new UnsupportedOperationException(
+                  "Token-based authentication not supported by default DataSourceContextModule. " +
+                  "Use a provider-specific module (e.g., AWSRdsContextModule, AzureDatabasesContextModule) " +
+                  "for IAM/Entra ID authentication.");
+         }
+      };
    }
 
    /**
@@ -125,7 +133,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param credentials the credentials (username and password)
     * @param endpoint the JDBC endpoint URL
     */
-   protected void configureCredentials(HikariDataSource dataSource, Credentials credentials, String endpoint) {
+   protected void configureCredentials(DataSource dataSource, Credentials credentials, String endpoint) {
       // Set static credentials (username and password)
       dataSource.setUsername(credentials.identity);
       dataSource.setPassword(credentials.credential);
@@ -141,7 +149,7 @@ public class DataSourceContextModule extends AbstractModule {
     * @param maxLifetime maximum connection lifetime in milliseconds
     * @param idleTimeout idle connection timeout in milliseconds
     */
-   protected void configureConnectionPool(HikariDataSource dataSource,
+   protected void configureConnectionPool (DataSource dataSource,
          String maxPoolSize, String minIdle, String connectionTimeout,
          String maxLifetime, String idleTimeout) {
       // Properties are retrieved from ApiMetadata defaults or user overrides
