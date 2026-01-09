@@ -18,6 +18,8 @@ package org.jclouds.aws.rds.auth;
 
 import java.net.URI;
 
+import org.jclouds.datasource.auth.DbAuthTokenGenerator;
+
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -33,30 +35,52 @@ import software.amazon.awssdk.services.rds.RdsUtilities;
  * <p>The tokens are valid for 15 minutes and should be regenerated for each
  * new connection.
  */
-public class RdsDbAuthTokenGenerator {
+public class RdsDbAuthTokenGenerator implements DbAuthTokenGenerator {
 
    private RdsUtilities rdsUtilities;
-   private Region region;
    private final AwsCredentialsProvider credentialsProvider;
+   private final URI uri;
+   private final String username;
+   private Region region;
 
    /**
-    * Creates a new token generator using default AWS credentials and region.
+    * Creates a new token generator for a specific connection using default AWS credentials and region.
     * Region detection is deferred until the first token generation request.
     *
+    * @param jdbcUrl JDBC URL (e.g., "jdbc:mysql://mydb.us-east-1.rds.amazonaws.com:3306/mydb")
+    * @param username database username
     * @return a new RdsDbAuthTokenGenerator instance
     */
-   public static RdsDbAuthTokenGenerator create() {
-      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), null);
+   public static RdsDbAuthTokenGenerator forConnection(String jdbcUrl, String username) {
+      URI uri = parseJdbcUrl(jdbcUrl);
+      return new RdsDbAuthTokenGenerator(DefaultCredentialsProvider.create(), uri, username, null);
+   }
+
+   /**
+    * Parses a JDBC URL to extract the hostname and port.
+    *
+    * @param jdbcUrl JDBC URL
+    * @return URI with host and port information
+    */
+   protected static URI parseJdbcUrl(String jdbcUrl) {
+      // Remove "jdbc:" prefix to get a standard URI
+      // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
+      String uriString = jdbcUrl.substring(5);
+      return URI.create(uriString);
    }
 
    /**
     * Creates a new token generator with specific credentials provider and region.
     *
     * @param credentialsProvider AWS credentials provider
+    * @param uri parsed URI from JDBC URL
+    * @param username database username
     * @param region AWS region (can be null to use default region provider chain)
     */
-   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, Region region) {
+   public RdsDbAuthTokenGenerator(AwsCredentialsProvider credentialsProvider, URI uri, String username, Region region) {
       this.credentialsProvider = credentialsProvider;
+      this.uri = uri;
+      this.username = username;
       this.region = region;
    }
 
@@ -81,35 +105,19 @@ public class RdsDbAuthTokenGenerator {
    /**
     * Generates an authentication token for connecting to an AWS RDS database using IAM credentials.
     *
-    * @param jdbcUrl JDBC URL (e.g., "jdbc:mysql://mydb.us-east-1.rds.amazonaws.com:3306/mydb")
-    * @param username database username
     * @return authentication token valid for 15 minutes
     */
-   public String generateToken(String jdbcUrl, String username) {
+   @Override
+   public String generateToken() {
       // Ensure RdsUtilities is initialized (lazy initialization)
       if (rdsUtilities == null) {
          initializeRdsUtilities();
       }
-
-      URI uri = parseJdbcUrl(jdbcUrl);
 
       return rdsUtilities.generateAuthenticationToken(builder -> builder
               .hostname(uri.getHost())
               .port(uri.getPort() > 0 ? uri.getPort() : 3306)
               .username(username)
               .region(region));
-   }
-
-   /**
-    * Parses a JDBC URL to extract the hostname and port.
-    *
-    * @param jdbcUrl JDBC URL
-    * @return URI with host and port information
-    */
-   protected URI parseJdbcUrl(String jdbcUrl) {
-      // Remove "jdbc:" prefix to get a standard URI
-      // e.g., "jdbc:mysql://host:port/db" -> "mysql://host:port/db"
-      String uriString = jdbcUrl.substring(5);
-      return URI.create(uriString);
    }
 }

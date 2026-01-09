@@ -19,12 +19,13 @@ This is a continuation of the archived upstream Apache jclouds project, maintain
 
 See [common/aws/README.md](common/aws/README.md) for detailed credential configuration.
 
-#### DataSource Abstraction & AWS RDS Provider
+#### DataSource Abstraction & Database Providers
 - **Generic DataSource API**: Standard JDBC DataSource abstraction for database connectivity
 - **AWS RDS Provider**: New provider with HikariCP connection pooling supporting both static password and passwordless IAM authentication
-- **On-Demand Token Generation**: For passwordless mode, fresh IAM auth tokens generated for each connection using ambient AWS credentials
+- **Azure Databases Provider**: New provider for Azure PostgreSQL/MySQL with Entra ID authentication and Azure Workload Identity support
+- **On-Demand Token Generation**: For passwordless mode, fresh auth tokens generated for each connection using ambient credentials (AWS IAM or Azure Entra ID)
 
-See [providers/aws-rds/README.md](providers/aws-rds/README.md) for usage examples and setup instructions.
+See [providers/aws-rds/README.md](providers/aws-rds/README.md) and [providers/azuredatabases/README.md](providers/azuredatabases/README.md) for usage examples and setup instructions.
 
 #### Build System Improvements
 - **CI-Friendly Maven**: Single-source version management using `${revision}` property
@@ -57,6 +58,12 @@ Add the itemis Nexus repository to your `pom.xml`:
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>aws-rds</artifactId>
+  <version>2.8.0</version>
+</dependency>
+
+<dependency>
+  <groupId>org.apache.jclouds.provider</groupId>
+  <artifactId>azuredatabases</artifactId>
   <version>2.8.0</version>
 </dependency>
 ```
