@@ -248,7 +248,7 @@ To use ambient credentials (EC2 roles, EKS IRSA, SSO, etc.), add AWS SDK depende
   <dependency>
     <groupId>org.apache.jclouds.provider</groupId>
     <artifactId>aws-s3</artifactId>
-    <version>2.8.0</version>
+    <version>2.9.0</version>
   </dependency>
 
   <!-- Add AWS SDK for ambient credential support -->
