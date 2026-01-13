@@ -25,6 +25,7 @@ import static org.jclouds.reflect.Reflection2.typeToken;
 import java.net.URI;
 import java.util.Properties;
 
+import org.jclouds.azure.credentials.AzureCredentialsProvider;
 import org.jclouds.azure.storage.config.AuthType;
 import org.jclouds.azureblob.blobstore.config.AzureBlobStoreContextModule;
 import org.jclouds.azureblob.config.AzureBlobHttpApiModule;
@@ -66,6 +67,7 @@ public class AzureBlobApiMetadata extends BaseHttpApiMetadata {
    public static class Builder extends BaseHttpApiMetadata.Builder<AzureBlobClient, Builder> {
       protected Builder() {
          super(AzureBlobClient.class);
+         AzureCredentialsProvider azureCredentialsProvider = new AzureCredentialsProvider();
          id("azureblob")
          .name("Microsoft Azure Blob Service API")
          .identityName("Account Name")
@@ -73,6 +75,7 @@ public class AzureBlobApiMetadata extends BaseHttpApiMetadata {
          .version("2017-11-09")
          .defaultEndpoint("https://${jclouds.identity}.blob.core.windows.net")
          .documentation(URI.create("http://msdn.microsoft.com/en-us/library/dd135733.aspx"))
+         .defaultCredentialsSupplier(azureCredentialsProvider.getCredentialsSupplier("https://storage.azure.com/.default"))
          .defaultProperties(AzureBlobApiMetadata.defaultProperties())
          .view(typeToken(BlobStoreContext.class))
          .defaultModules(ImmutableSet.<Class<? extends Module>>of(

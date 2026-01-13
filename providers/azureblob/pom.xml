@@ -46,6 +46,11 @@
       <type>jar</type>
     </dependency>
     <dependency>
+      <groupId>org.apache.jclouds.common</groupId>
+      <artifactId>azure</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-core</artifactId>
       <version>${project.version}</version>
@@ -75,6 +80,12 @@
       <artifactId>oauth</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-identity</artifactId>
+      <version>1.15.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
