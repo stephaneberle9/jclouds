@@ -85,7 +85,6 @@
       <groupId>com.azure</groupId>
       <artifactId>azure-identity</artifactId>
       <version>1.15.1</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
