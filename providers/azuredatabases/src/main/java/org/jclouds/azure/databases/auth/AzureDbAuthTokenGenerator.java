@@ -16,13 +16,9 @@
  */
 package org.jclouds.azure.databases.auth;
 
+import org.jclouds.azure.credentials.AzureCredentialsProvider;
 import org.jclouds.datasource.auth.DbAuthTokenGenerator;
-
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
-import com.azure.identity.ChainedTokenCredentialBuilder;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.identity.WorkloadIdentityCredentialBuilder;
+import org.jclouds.domain.Credentials;
 
 /**
  * Generates authentication tokens for connecting to an Azure Database using Entra ID credentials.
@@ -33,11 +29,10 @@ import com.azure.identity.WorkloadIdentityCredentialBuilder;
  * <p>The tokens are typically valid for 1 hour and should be regenerated for each
  * new connection.
  *
- * <p>Azure credentials are obtained using DefaultAzureCredential which supports multiple
+ * <p>Azure credentials are obtained using {@link AzureCredentialsProvider} which supports multiple
  * authentication methods in order:
  * <ul>
  *   <li>Environment variables (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET)</li>
- *   <li>Workload Identity (for AKS with federated tokens)</li>
  *   <li>Managed Identity (for Azure VMs, App Service, Container Instances, etc.)</li>
  *   <li>Azure CLI (az login)</li>
  *   <li>Azure PowerShell</li>
@@ -48,41 +43,24 @@ public class AzureDbAuthTokenGenerator implements DbAuthTokenGenerator {
 
    private static final String AZURE_OSSRDBMS_SCOPE = "https://ossrdbms-aad.database.windows.net/.default";
 
-   private final TokenCredential credential;
+   private final AzureCredentialsProvider credentialsProvider;
 
    /**
-    * Creates a new token generator using a chain of Azure credentials.
-    * The chain tries WorkloadIdentityCredential first (for AKS), then falls back to DefaultAzureCredential.
+    * Creates a new token generator using a new AzureCredentialsProvider instance.
     *
     * @return a new AzureDbAuthTokenGenerator instance
     */
    public static AzureDbAuthTokenGenerator create() {
-      // Build a credential chain that tries Workload Identity first, then falls back to DefaultAzureCredential
-      // Only include WorkloadIdentityCredential if the required environment variables are set
-      ChainedTokenCredentialBuilder builder = new ChainedTokenCredentialBuilder();
-
-      // Check if Workload Identity environment variables are present
-      String clientId = System.getenv("AZURE_CLIENT_ID");
-      String tenantId = System.getenv("AZURE_TENANT_ID");
-      String tokenFile = System.getenv("AZURE_FEDERATED_TOKEN_FILE");
-
-      if (clientId != null && tenantId != null && tokenFile != null) {
-         builder.addLast(new WorkloadIdentityCredentialBuilder().build());
-      }
-
-      builder.addLast(new DefaultAzureCredentialBuilder().build());
-
-      TokenCredential credential = builder.build();
-      return new AzureDbAuthTokenGenerator(credential);
+      return new AzureDbAuthTokenGenerator(new AzureCredentialsProvider());
    }
 
    /**
-    * Creates a new token generator with a specific credential.
+    * Creates a new token generator with a specific credentials provider.
     *
-    * @param credential Azure credential provider
+    * @param credentialsProvider Azure credentials provider
     */
-   public AzureDbAuthTokenGenerator(TokenCredential credential) {
-      this.credential = credential;
+   public AzureDbAuthTokenGenerator(AzureCredentialsProvider credentialsProvider) {
+      this.credentialsProvider = credentialsProvider;
    }
 
    /**
@@ -96,7 +74,7 @@ public class AzureDbAuthTokenGenerator implements DbAuthTokenGenerator {
     */
    @Override
    public String generateToken() {
-      TokenRequestContext request = new TokenRequestContext().addScopes(AZURE_OSSRDBMS_SCOPE);
-      return credential.getTokenSync(request).getToken();
+      Credentials credentials = credentialsProvider.getCredentials(AZURE_OSSRDBMS_SCOPE);
+      return credentials.credential;
    }
 }
