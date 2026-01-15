@@ -80,7 +80,6 @@ public class AzureCredentialsProvider {
     protected Logger logger = Boolean.getBoolean(DEBUG_PROPERTY) ? Logger.CONSOLE : Logger.NULL;
 
     private TokenCredential tokenCredential;
-    private AccessToken cachedToken;
 
     /**
      * Checks if Azure Identity classes are available on the classpath at runtime.
@@ -141,7 +140,10 @@ public class AzureCredentialsProvider {
 
     /**
      * Retrieves an access token for the specified scope.
-     * Tokens are cached and refreshed automatically when they expire.
+     * <p>
+     * Note: No need to manually cache tokens, Azure Identity SDK handles token caching automatically
+     * via the DefaultAzureCredential. The SDK's in-memory token cache will return cached tokens
+     * when they are still valid and automatically refresh them when needed.
      *
      * @param scope the Azure resource scope (e.g., "https://management.azure.com/.default")
      * @return the access token
@@ -151,25 +153,16 @@ public class AzureCredentialsProvider {
             this.tokenCredential = resolveTokenCredential();
         }
 
-        // Check if we have a cached token that's still valid (with 5 minute buffer)
-        if (cachedToken != null && !cachedToken.isExpired()) {
-            long expiresInSeconds = cachedToken.getExpiresAt().toEpochSecond() - System.currentTimeMillis() / 1000;
-            if (expiresInSeconds > 300) { // 5 minute buffer
-                logger.info(Logger.formatWithContext("Using cached Azure access token (expires in " + expiresInSeconds + " seconds)"));
-                return cachedToken;
-            }
-        }
-
         try {
-            logger.info(Logger.formatWithContext("Requesting new Azure access token for scope: " + scope));
+            logger.info(Logger.formatWithContext("Requesting Azure access token for scope: " + scope));
             TokenRequestContext requestContext = new TokenRequestContext().addScopes(scope);
-            cachedToken = this.tokenCredential.getTokenSync(requestContext);
+            AccessToken token = this.tokenCredential.getTokenSync(requestContext);
 
             logger.info(Logger.formatWithContext("Successfully retrieved Azure access token"));
-            logger.info(Logger.formatWithContext("- Token: " + cachedToken.getToken().substring(0, Math.min(20, cachedToken.getToken().length())) + "..."));
-            logger.info(Logger.formatWithContext("- Expires at: " + cachedToken.getExpiresAt()));
+            logger.info(Logger.formatWithContext("- Token: " + token.getToken().substring(0, Math.min(20, token.getToken().length())) + "..."));
+            logger.info(Logger.formatWithContext("- Expires at: " + token.getExpiresAt()));
 
-            return cachedToken;
+            return token;
         } catch (Exception e) {
             throw new IllegalStateException("Failed to retrieve Azure access token", e);
         }

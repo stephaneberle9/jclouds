@@ -66,12 +66,6 @@ Add the itemis Nexus repository to your `pom.xml`:
   <artifactId>azuredatabases</artifactId>
   <version>2.9.0</version>
 </dependency>
-
-<dependency>
-  <groupId>org.apache.jclouds.provider</groupId>
-  <artifactId>azuredatabases</artifactId>
-  <version>2.8.0</version>
-</dependency>
 ```
 
 ### Building
