@@ -79,7 +79,8 @@ public class AzureCredentialsProvider {
      */
     protected Logger logger = Boolean.getBoolean(DEBUG_PROPERTY) ? Logger.CONSOLE : Logger.NULL;
 
-    private TokenCredential tokenCredential;
+    // Use Object type to avoid class loading of TokenCredential when Azure Identity is not available
+    private Object tokenCredential;
 
     /**
      * Checks if Azure Identity classes are available on the classpath at runtime.
@@ -107,7 +108,8 @@ public class AzureCredentialsProvider {
         return AZURE_IDENTITY_AVAILABLE;
     }
 
-    protected TokenCredential resolveTokenCredential() {
+    // Use Object type to avoid class loading of TokenCredential when Azure Identity is not available
+    protected Object resolveTokenCredential() {
         if (!AZURE_IDENTITY_AVAILABLE) {
             throw new IllegalStateException(
                     "Azure Identity is not available on the classpath. To use ambient credentials (Managed Identity, " +
@@ -156,7 +158,7 @@ public class AzureCredentialsProvider {
         try {
             logger.info(Logger.formatWithContext("Requesting Azure access token for scope: " + scope));
             TokenRequestContext requestContext = new TokenRequestContext().addScopes(scope);
-            AccessToken token = this.tokenCredential.getTokenSync(requestContext);
+            AccessToken token = ((TokenCredential) this.tokenCredential).getTokenSync(requestContext);
 
             logger.info(Logger.formatWithContext("Successfully retrieved Azure access token"));
             logger.info(Logger.formatWithContext("- Token: " + token.getToken().substring(0, Math.min(20, token.getToken().length())) + "..."));

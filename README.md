@@ -17,7 +17,7 @@ This is a continuation of the archived upstream Apache jclouds project, maintain
 - **AWS S3 Provider**: Enhanced with ambient credential support, eliminating the need for hardcoded access keys
 - **Foundation for Future AWS Providers**: Shared AWS infrastructure ready for other AWS service providers
 
-See [common/aws/README.md](common/aws/README.md) for detailed credential configuration.
+See [common/aws/README.md](common/aws/README.md) for setup and usage.
 
 #### Azure Ambient Credentials Support
 - **Azure Identity Integration**: Native support for Azure Identity default credential chain across Azure providers
@@ -26,7 +26,7 @@ See [common/aws/README.md](common/aws/README.md) for detailed credential configu
 - **Azure Databases Provider**: Workload identity authentication using shared Azure credential infrastructure
 - **Foundation for Future Azure Providers**: Shared Azure infrastructure ready for other Azure service providers
 
-See [common/azure/](common/azure/) for the shared credential provider implementation.
+See [common/azure/README.md](common/azure/README.md) for setup and usage.
 
 #### DataSource Abstraction & Database Providers
 - **Generic DataSource API**: Standard JDBC DataSource abstraction for database connectivity

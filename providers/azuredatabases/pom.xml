@@ -30,22 +30,6 @@
   <name>jclouds Azure Databases provider</name>
   <description>Azure Databases for PostgreSQL/MySQL implementation with Entra ID authentication support</description>
 
-  <properties>
-    <azure.sdk.version>1.2.38</azure.sdk.version>
-  </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-sdk-bom</artifactId>
-        <version>${azure.sdk.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.jclouds</groupId>
@@ -64,10 +48,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.azure</groupId>
-      <artifactId>azure-identity</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-core</artifactId>
       <version>${project.version}</version>
@@ -84,6 +64,12 @@
       <groupId>com.google.auto.service</groupId>
       <artifactId>auto-service</artifactId>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-identity</artifactId>
+      <version>1.15.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
