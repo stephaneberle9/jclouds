@@ -19,6 +19,15 @@ This is a continuation of the archived upstream Apache jclouds project, maintain
 
 See [common/aws/README.md](common/aws/README.md) for detailed credential configuration.
 
+#### Azure Ambient Credentials Support
+- **Azure Identity Integration**: Native support for Azure Identity default credential chain across Azure providers
+- **Managed Identity & CLI**: Seamless authentication using Azure Managed Identity, Azure CLI, environment variables, and other ambient credential sources
+- **Azure Blob Provider**: Enhanced with ambient credential support via `AzureCredentialsProvider`
+- **Azure Databases Provider**: Workload identity authentication using shared Azure credential infrastructure
+- **Foundation for Future Azure Providers**: Shared Azure infrastructure ready for other Azure service providers
+
+See [common/azure/](common/azure/) for the shared credential provider implementation.
+
 #### DataSource Abstraction & Database Providers
 - **Generic DataSource API**: Standard JDBC DataSource abstraction for database connectivity
 - **AWS RDS Provider**: New provider with HikariCP connection pooling supporting both static password and passwordless IAM authentication
@@ -58,6 +67,12 @@ Add the itemis Nexus repository to your `pom.xml`:
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>aws-rds</artifactId>
+  <version>2.9.0</version>
+</dependency>
+
+<dependency>
+  <groupId>org.apache.jclouds.provider</groupId>
+  <artifactId>azureblob</artifactId>
   <version>2.9.0</version>
 </dependency>
 
