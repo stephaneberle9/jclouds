@@ -142,6 +142,7 @@ jobs:
         run: chmod +x mvnw
 
       # Check if the version is a SNAPSHOT before deploying
+      # Non-SNAPSHOT versions on main branch are expected during release preparation
       - name: Check if version is snapshot
         id: check-snapshot
         run: |
@@ -149,10 +150,12 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           if [[ "$VERSION" == *-SNAPSHOT ]]; then
             echo "is_snapshot=true" >> $GITHUB_OUTPUT
-            echo "✓ Version $VERSION is a SNAPSHOT - will deploy"
+            echo "✓ Version $VERSION is a SNAPSHOT - will deploy to snapshots repository"
           else
             echo "is_snapshot=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Skipping snapshot deployment - version $VERSION is not a SNAPSHOT"
+            echo "ℹ️ Version $VERSION is a release version (no -SNAPSHOT suffix)"
+            echo "   This is expected for release preparation commits."
+            echo "   To deploy this release, push a tag: git tag v$VERSION && git push origin v$VERSION"
           fi
 
       # Deploy without rebuilding - artifacts are already built
