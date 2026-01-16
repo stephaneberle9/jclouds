@@ -222,7 +222,7 @@
 
   <properties>
     <!-- CI-friendly version property -->
-    <revision>2.9.0</revision>
+    <revision>2.10.0-SNAPSHOT</revision>
 
     <jdk.version>11</jdk.version>
     <maven.compile.source>${jdk.version}</maven.compile.source>

@@ -426,14 +426,14 @@ Actions performed:
 - Deploys snapshot artifacts to itemis Nexus
 - Uses credentials from GitHub secrets: `itemis_NEXUS_USER` and `itemis_NEXUS_PASS`
 
-Snapshot version format: `2.9.0-SNAPSHOT`
+Snapshot version format: `2.10.0-SNAPSHOT`
 
 #### Release Deployment
 
 **Workflow**: `deploy-release.yml`
 
 Runs automatically when:
-- A tag with `v` prefix is pushed (e.g., `v2.9.0`)
+- A tag with `v` prefix is pushed (e.g., `v2.10.0`)
 
 Actions performed:
 - Validates that version is not a snapshot
@@ -441,7 +441,7 @@ Actions performed:
 - Deploys release artifacts to itemis Nexus
 - Uses credentials from GitHub secrets
 
-Release version format: `2.9.0` (no `-SNAPSHOT` suffix)
+Release version format: `2.10.0` (no `-SNAPSHOT` suffix)
 
 #### Local Deployment Testing
 
@@ -484,14 +484,14 @@ mvnw.cmd apache-rat:check
 Update the version in the root `pom.xml` and all module POMs:
 
 ```xml
-<version>2.9.0</version>  <!-- Remove -SNAPSHOT suffix -->
+<version>2.10.0</version>  <!-- Remove -SNAPSHOT suffix -->
 ```
 
 Commit the version change:
 
 ```bash
 git add .
-git commit -m "release: Prepare version 2.9.0"
+git commit -m "release: Prepare version 2.10.0"
 git push origin main
 ```
 
@@ -499,10 +499,10 @@ git push origin main
 
 ```bash
 # Create annotated tag
-git tag -a v2.9.0 -m "Release version 2.9.0"
+git tag -a v2.10.0 -m "Release version 2.10.0"
 
 # Push tag to trigger release deployment
-git push origin v2.9.0
+git push origin v2.10.0
 ```
 
 ### 4. Automatic Deployment
@@ -517,21 +517,21 @@ The `deploy-release.yml` workflow will automatically:
 Update the version to the next snapshot:
 
 ```xml
-<version>2.10.0-SNAPSHOT</version>
+<version>2.11.0-SNAPSHOT</version>
 ```
 
 Commit and push:
 
 ```bash
 git add .
-git commit -m "chore: bump version to 2.10.0-SNAPSHOT"
+git commit -m "chore: bump version to 2.11.0-SNAPSHOT"
 git push origin main
 ```
 
 ### Version Format
 
-- **Snapshot versions**: `X.Y.Z-SNAPSHOT` (e.g., `2.9.0-SNAPSHOT`)
-- **Release versions**: `X.Y.Z` (e.g., `2.9.0`)
+- **Snapshot versions**: `X.Y.Z-SNAPSHOT` (e.g., `2.10.0-SNAPSHOT`)
+- **Release versions**: `X.Y.Z` (e.g., `2.10.0`)
 
 The CI pipeline prevents deploying snapshot versions to the release repository.
 
