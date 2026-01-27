@@ -23,6 +23,7 @@ import org.jclouds.aws.domain.SessionCredentials;
 import org.jclouds.logging.Logger;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -81,6 +82,7 @@ public class AWSCredentialsProvider {
      */
     protected Logger logger = Boolean.getBoolean(DEBUG_PROPERTY) ? Logger.CONSOLE : Logger.NULL;
 
+    private AwsCredentialsProvider credentialsProvider;
     private Region region;
 
     /**
@@ -123,8 +125,14 @@ public class AWSCredentialsProvider {
         }
 
         try {
+            // Cache the provider instance (not the credentials) to avoid recreating it on every call.
+            // The AWS SDK's DefaultCredentialsProvider handles credential caching and refresh internally.
+            if (this.credentialsProvider == null) {
+                this.credentialsProvider = DefaultCredentialsProvider.create();
+            }
+
             logger.info(Logger.formatWithContext("Retrieving AWS credentials..."));
-            AwsCredentials awsCredentials = DefaultCredentialsProvider.create().resolveCredentials();
+            AwsCredentials awsCredentials = this.credentialsProvider.resolveCredentials();
             
             // INFO: High-level success message for operational visibility
             logger.info(Logger.formatWithContext("Successfully retrieved "
