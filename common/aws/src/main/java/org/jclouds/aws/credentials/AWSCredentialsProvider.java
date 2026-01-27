@@ -81,7 +81,6 @@ public class AWSCredentialsProvider {
      */
     protected Logger logger = Boolean.getBoolean(DEBUG_PROPERTY) ? Logger.CONSOLE : Logger.NULL;
 
-    private AwsCredentials awsCredentials;
     private Region region;
 
     /**
@@ -156,21 +155,20 @@ public class AWSCredentialsProvider {
     }
 
     public Credentials getCredentials() {
-        if (this.awsCredentials == null) {
-            this.awsCredentials = resolveAwsCredentials();
-        }
+        // Always resolve fresh credentials to allow AWS SDK v2's automatic refresh to work.
+        // The AWS SDK's DefaultCredentialsProvider handles caching internally, so there's
+        // no performance penalty from calling this on every request.
+        AwsCredentials awsCredentials = resolveAwsCredentials();
 
-        if (!(this.awsCredentials instanceof AwsSessionCredentials)) {
+        if (!(awsCredentials instanceof AwsSessionCredentials)) {
             // Yield permanent credentials
             return new Credentials.Builder<Credentials>()
-                    .identity(this.awsCredentials.accessKeyId())
-                    .credential(this.awsCredentials.secretAccessKey())
+                    .identity(awsCredentials.accessKeyId())
+                    .credential(awsCredentials.secretAccessKey())
                     .build();
         } else {
             // Yield temporary credentials
-            // Note: No need to manually refresh credentials, AWS SDK v2 handles credential refresh automatically
-            // via the credentials provider chain
-            AwsSessionCredentials awsSessionCredentials = (AwsSessionCredentials) this.awsCredentials;
+            AwsSessionCredentials awsSessionCredentials = (AwsSessionCredentials) awsCredentials;
             return SessionCredentials.builder()
                     .accessKeyId(awsSessionCredentials.accessKeyId())
                     .secretAccessKey(awsSessionCredentials.secretAccessKey())
