@@ -166,4 +166,63 @@ public class AWSCredentialsProviderTest {
       // This test documents expected behavior - actual test would require
       // custom classloader to exclude AWS SDK classes
    }
+
+   /**
+    * Regression test for credential refresh bug.
+    * 
+    * This test verifies that credentials are NOT cached indefinitely, which was the bug
+    * that prevented long-living BlobStore instances from working with temporary AWS credentials
+    * (IAM roles, ECS task roles, STS tokens) that expire after ~1 hour.
+    * 
+    * The test uses a custom TestableAWSCredentialsProvider that allows us to control
+    * and verify the credential resolution behavior.
+    */
+   @Test
+   public void testCredentialsAreNotCachedIndefinitely() {
+      // Create a testable provider that tracks how many times credentials are resolved
+      TestableAWSCredentialsProvider provider = new TestableAWSCredentialsProvider();
+
+      // First call to getCredentials() should resolve credentials
+      Credentials creds1 = provider.getCredentials();
+      assertNotNull(creds1, "First credentials should not be null");
+      assertTrue(provider.getResolveCount() >= 1, "Should have resolved credentials at least once");
+
+      // Second call should resolve fresh credentials again (not use cached value)
+      int countAfterFirstCall = provider.getResolveCount();
+      Credentials creds2 = provider.getCredentials();
+      assertNotNull(creds2, "Second credentials should not be null");
+      assertTrue(provider.getResolveCount() > countAfterFirstCall, 
+            "Should resolve fresh credentials on each call, not cache them. " +
+            "This ensures temporary credentials can be refreshed automatically.");
+
+      // Third call to verify the pattern holds
+      int countAfterSecondCall = provider.getResolveCount();
+      Credentials creds3 = provider.getCredentials();
+      assertNotNull(creds3, "Third credentials should not be null");
+      assertTrue(provider.getResolveCount() > countAfterSecondCall,
+            "Should continue to resolve fresh credentials on subsequent calls");
+   }
+
+   /**
+    * Testable subclass of AWSCredentialsProvider that allows us to track
+    * how many times resolveAwsCredentials() is called without needing real AWS credentials.
+    */
+   private static class TestableAWSCredentialsProvider extends AWSCredentialsProvider {
+      private int resolveCount = 0;
+
+      @Override
+      protected software.amazon.awssdk.auth.credentials.AwsCredentials resolveAwsCredentials() {
+         resolveCount++;
+         // Return mock credentials instead of calling AWS SDK
+         // This allows the test to run without real AWS credentials configured
+         return software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create(
+               "AKIAIOSFODNN7EXAMPLE", 
+               "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+         );
+      }
+
+      public int getResolveCount() {
+         return resolveCount;
+      }
+   }
 }
