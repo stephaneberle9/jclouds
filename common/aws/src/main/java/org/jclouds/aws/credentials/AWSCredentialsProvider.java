@@ -82,7 +82,8 @@ public class AWSCredentialsProvider {
      */
     protected Logger logger = Boolean.getBoolean(DEBUG_PROPERTY) ? Logger.CONSOLE : Logger.NULL;
 
-    private AwsCredentialsProvider credentialsProvider;
+    // is a AwsCredentialsProvider, but that class is potentially not present
+    private Object credentialsProvider;
     private Region region;
 
     /**
@@ -132,7 +133,7 @@ public class AWSCredentialsProvider {
             }
 
             logger.info(Logger.formatWithContext("Retrieving AWS credentials..."));
-            AwsCredentials awsCredentials = this.credentialsProvider.resolveCredentials();
+            AwsCredentials awsCredentials = ((AwsCredentialsProvider)this.credentialsProvider).resolveCredentials();
             
             // INFO: High-level success message for operational visibility
             logger.info(Logger.formatWithContext("Successfully retrieved "
