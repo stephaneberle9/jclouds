@@ -61,25 +61,25 @@ Add the itemis Nexus repository to your `pom.xml`:
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>aws-s3</artifactId>
-  <version>2.9.0</version>
+  <version>2.9.1</version>
 </dependency>
 
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>aws-rds</artifactId>
-  <version>2.9.0</version>
+  <version>2.9.1</version>
 </dependency>
 
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>azureblob</artifactId>
-  <version>2.9.0</version>
+  <version>2.9.1</version>
 </dependency>
 
 <dependency>
   <groupId>org.apache.jclouds.provider</groupId>
   <artifactId>azuredatabases</artifactId>
-  <version>2.9.0</version>
+  <version>2.9.1</version>
 </dependency>
 ```
 
