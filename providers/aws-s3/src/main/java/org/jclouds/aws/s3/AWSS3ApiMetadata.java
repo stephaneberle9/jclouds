@@ -67,7 +67,9 @@ public class AWSS3ApiMetadata extends S3ApiMetadata {
          .name("Amazon-specific S3 API")
          .defaultEndpoint("https://s3.amazonaws.com")
          .defaultCredentialsSupplier(awsCredentialsProvider.getCredentialsSupplier())
-         .defaultProperties(AWSS3ApiMetadata.defaultProperties(awsCredentialsProvider.getRegion()))
+         // Constructed for every provider on the classpath whenever any context is built, so this
+         // must not wait for the instance metadata service: configured sources only.
+         .defaultProperties(AWSS3ApiMetadata.defaultProperties(awsCredentialsProvider.getConfiguredRegion()))
          .view(typeToken(AWSS3BlobStoreContext.class))
          .defaultModules(ImmutableSet.<Class<? extends Module>>of(AWSS3HttpApiModule.class, AWSS3BlobStoreContextModule.class));
       }

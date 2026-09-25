@@ -16,6 +16,7 @@
  */
 package org.jclouds.aws.credentials;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -70,6 +71,54 @@ public class AWSCredentialsProviderTest {
       assertNotNull(region, "Region should not be null");
       // If no region configured, should default to us-east-1
       // Note: This test might detect region from environment, which is fine
+   }
+
+   @Test
+   public void testConfiguredRegionHonoursTheSystemProperty() {
+      String original = System.getProperty("aws.region");
+      try {
+         System.setProperty("aws.region", "eu-central-1");
+         assertEquals(new AWSCredentialsProvider().getConfiguredRegion(), "eu-central-1",
+               "getConfiguredRegion() should return the region the aws.region system property names");
+      } finally {
+         if (original != null) {
+            System.setProperty("aws.region", original);
+         } else {
+            System.clearProperty("aws.region");
+         }
+      }
+   }
+
+   @Test
+   public void testConfiguredRegionDoesNotWaitForInstanceMetadata() {
+      // Off EC2 the instance metadata service is unreachable and every attempt to reach it is a
+      // connect timeout of a second or more; the configured lookup must never go there. A bound
+      // well below one attempt separates the two behaviours without depending on the machine.
+      String original = System.getProperty("aws.region");
+      try {
+         System.clearProperty("aws.region");
+         long start = System.nanoTime();
+         String region = new AWSCredentialsProvider().getConfiguredRegion();
+         long millis = (System.nanoTime() - start) / 1_000_000L;
+         assertNotNull(region, "Region should never be null");
+         assertTrue(millis < 800, "getConfiguredRegion() took " + millis
+               + " ms; it must not consult the instance metadata service");
+      } finally {
+         if (original != null) {
+            System.setProperty("aws.region", original);
+         }
+      }
+   }
+
+   @Test
+   public void testRegionIsDetectedOncePerProcess() {
+      String first = new AWSCredentialsProvider().getRegion();
+      long start = System.nanoTime();
+      String second = new AWSCredentialsProvider().getRegion();
+      long millis = (System.nanoTime() - start) / 1_000_000L;
+      assertEquals(second, first, "Every instance should see the region detected once for the process");
+      assertTrue(millis < 200, "A second getRegion() took " + millis
+            + " ms; the detected region must be memoized, failure included");
    }
 
    @Test
