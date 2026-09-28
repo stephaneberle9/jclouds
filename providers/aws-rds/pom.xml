@@ -30,7 +30,6 @@
   <name>jclouds Amazon RDS provider</name>
   <description>Amazon RDS implementation with IAM authentication support</description>
 
-
   <dependencyManagement>
     <dependencies>
       <dependency>

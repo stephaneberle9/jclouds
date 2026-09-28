@@ -80,8 +80,6 @@
                  metadata endpoint, the profile files, aws.region); they must not share a JVM
                  with tests running in parallel and run alone in the execution below -->
             <excludes combine.children="append">
-              <exclude>**/*IntegrationTest.java</exclude>
-              <exclude>**/*LiveTest.java</exclude>
               <exclude>**/*InstanceMetadataTest.java</exclude>
             </excludes>
           </configuration>
