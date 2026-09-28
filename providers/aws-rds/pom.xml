@@ -30,9 +30,6 @@
   <name>jclouds Amazon RDS provider</name>
   <description>Amazon RDS implementation with IAM authentication support</description>
 
-  <properties>
-    <awssdk.version>2.36.2</awssdk.version>
-  </properties>
 
   <dependencyManagement>
     <dependencies>

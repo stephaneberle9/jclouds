@@ -16,6 +16,7 @@
  */
 package org.jclouds.aws.credentials;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 
 import org.jclouds.domain.Credentials;
@@ -26,8 +27,10 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.AwsProfileRegionProvider;
+import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
 
 /**
  * AWS credentials provider that resolves credentials using the AWS SDK v2 default credentials chain.
@@ -84,7 +87,15 @@ public class AWSCredentialsProvider {
 
     // is a AwsCredentialsProvider, but that class is potentially not present
     private Object credentialsProvider;
-    private Region region;
+
+    // The detected region is process-wide state (environment, system properties, profile file,
+    // instance metadata), so it is shared by every instance and detected once, failure included.
+    // The SDK chain ends at the EC2 instance metadata service, and away from EC2 every attempt to
+    // reach it is a connect timeout: a per-instance lookup made each provider metadata construction
+    // pay that timeout again (~40 s of it during one application start), and every credential
+    // resolution after it.
+    private static final Object DETECTION_LOCK = new Object();
+    private static volatile String detectedRegion;
 
     /**
      * Checks if AWS SDK v2 classes are available on the classpath at runtime.
@@ -149,7 +160,9 @@ public class AWSCredentialsProvider {
                 String sessionToken = awsSessionCredentials.sessionToken();
                 logger.info(Logger.formatWithContext("- Session Token: " + sessionToken.substring(0, Math.min(8, sessionToken.length())) + "..."));
             }
-            logger.info(Logger.formatWithContext("- Region: " + getRegion()));
+            if (logger.isInfoEnabled()) {
+                logger.info(Logger.formatWithContext("- Region: " + getConfiguredRegion()));
+            }
             return awsCredentials;
         } catch (Exception e) {
             throw new IllegalStateException(
@@ -209,7 +222,7 @@ public class AWSCredentialsProvider {
     }
 
     /**
-     * Returns the AWS region to use for API calls.
+     * Returns the AWS region detected by the SDK's full chain, once per process.
      * <p>
      * If AWS SDK is available, uses DefaultAwsRegionProviderChain which checks:
      * <ol>
@@ -219,25 +232,72 @@ public class AWSCredentialsProvider {
      *   <li>EC2 instance metadata</li>
      * </ol>
      * <p>
-     * If AWS SDK is not available or region detection fails, returns {@value #DEFAULT_REGION}.
+     * If AWS SDK is not available or region detection fails, returns {@value #DEFAULT_REGION}. The
+     * outcome is memoized for the life of the process, failure included: a transient failure at the
+     * first call pins {@value #DEFAULT_REGION} until the process restarts.
+     * <p>
+     * The last step contacts the instance metadata service, so do not call this while building
+     * provider metadata; use {@link #getConfiguredRegion()} there.
      *
      * @return AWS region identifier (e.g., "us-east-1")
+     * @deprecated no jclouds code needs the instance metadata service to name a region; use
+     *             {@link #getConfiguredRegion()}, which never contacts it. Kept because it is public API.
      */
+    @Deprecated
     public String getRegion() {
         if (!AWS_SDK_AVAILABLE) {
             logger.info(Logger.formatWithContext("AWS SDK not available, using default region: " + DEFAULT_REGION));
             return DEFAULT_REGION;
         }
-
-        if (this.region == null) {
-            try {
-                this.region = new DefaultAwsRegionProviderChain().getRegion();
-            } catch (Exception e) {
-                logger.warn(Logger.formatWithContext("Failed to detect AWS region, using default: " + DEFAULT_REGION));
-                return DEFAULT_REGION;
+        String region = detectedRegion;
+        if (region == null) {
+            synchronized (DETECTION_LOCK) {
+                region = detectedRegion;
+                if (region == null) {
+                    region = detectRegion();
+                    detectedRegion = region;
+                }
             }
         }
+        return region;
+    }
 
-        return this.region.id();
+    /**
+     * Returns the region the environment states, without contacting the instance metadata service:
+     * the AWS_REGION environment variable, the aws.region system property, or the profile file;
+     * {@value #DEFAULT_REGION} when none of them names one.
+     * <p>
+     * Safe to call from provider metadata constructors, which run for every provider on the
+     * classpath whenever any context is built, in any environment.
+     *
+     * @return AWS region identifier (e.g., "us-east-1")
+     */
+    public String getConfiguredRegion() {
+        if (!AWS_SDK_AVAILABLE) {
+            return DEFAULT_REGION;
+        }
+        try {
+            return new AwsRegionProviderChain(new SystemSettingsRegionProvider(), new AwsProfileRegionProvider())
+                    .getRegion().id();
+        } catch (Exception e) {
+            return DEFAULT_REGION;
+        }
+    }
+
+    /** Forgets the detected region so a test can drive detection itself. */
+    @VisibleForTesting
+    static void resetDetectedRegionForTesting() {
+        synchronized (DETECTION_LOCK) {
+            detectedRegion = null;
+        }
+    }
+
+    private String detectRegion() {
+        try {
+            return new DefaultAwsRegionProviderChain().getRegion().id();
+        } catch (Exception e) {
+            logger.warn(Logger.formatWithContext("Failed to detect AWS region, using default: " + DEFAULT_REGION));
+            return DEFAULT_REGION;
+        }
     }
 }

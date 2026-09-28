@@ -30,6 +30,7 @@ import org.jclouds.domain.Credentials;
  *
  * Note: Tests must run single-threaded because they manipulate shared system properties.
  */
+@SuppressWarnings("deprecation") // getRegion() stays public API and keeps its contract tests
 @Test(groups = "unit", testName = "AWSCredentialsProviderTest", singleThreaded = true)
 public class AWSCredentialsProviderTest {
 
