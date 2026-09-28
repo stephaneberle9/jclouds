@@ -426,7 +426,7 @@ Actions performed:
 - Deploys snapshot artifacts to itemis Nexus
 - Uses credentials from GitHub secrets: `itemis_NEXUS_USER` and `itemis_NEXUS_PASS`
 
-Snapshot version format: `2.9.2-SNAPSHOT`
+Snapshot version format: `2.10.0-SNAPSHOT`
 
 #### Release Deployment
 
@@ -481,10 +481,10 @@ mvnw.cmd apache-rat:check
 
 ### 2. Update Version
 
-Update the version in the root `pom.xml` and all module POMs:
+The version is defined once, by the `revision` property in `project/pom.xml`; all other POMs refer to it as `${revision}`. Update it there:
 
 ```xml
-<version>2.9.1</version>  <!-- Remove -SNAPSHOT suffix -->
+<revision>2.9.1</revision>  <!-- Remove -SNAPSHOT suffix -->
 ```
 
 Commit the version change:
@@ -514,23 +514,23 @@ The `deploy-release.yml` workflow will automatically:
 
 ### 5. Prepare for Next Development Cycle
 
-Update the version to the next snapshot:
+Update the `revision` property in `project/pom.xml` to the next snapshot:
 
 ```xml
-<version>2.9.2-SNAPSHOT</version>
+<revision>2.10.0-SNAPSHOT</revision>
 ```
 
 Commit and push:
 
 ```bash
 git add .
-git commit -m "chore: bump version to 2.9.2-SNAPSHOT"
+git commit -m "chore: bump version to 2.10.0-SNAPSHOT"
 git push origin main
 ```
 
 ### Version Format
 
-- **Snapshot versions**: `X.Y.Z-SNAPSHOT` (e.g., `2.9.2-SNAPSHOT`)
+- **Snapshot versions**: `X.Y.Z-SNAPSHOT` (e.g., `2.10.0-SNAPSHOT`)
 - **Release versions**: `X.Y.Z` (e.g., `2.9.1`)
 
 The CI pipeline prevents deploying snapshot versions to the release repository.

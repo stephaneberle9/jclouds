@@ -219,10 +219,10 @@ The region a provider puts into `jclouds.region` comes from configured sources o
 
 The EC2 instance metadata service is **not** consulted for this. Provider metadata is constructed
 for every provider on the classpath whenever any context is built, and away from EC2 every attempt
-to reach the metadata service is a connect timeout: before 2.9.2 an application building two
+to reach the metadata service is a connect timeout: before 2.10.0 an application building two
 `aws-s3` contexts spent about 40 seconds of its start-up in such attempts.
 
-**Behavior change for bare EC2 instances (2.9.2):** an instance (or Elastic Beanstalk environment)
+**Behavior change for bare EC2 instances (2.10.0):** an instance (or Elastic Beanstalk environment)
 that relied on the metadata service to fill `jclouds.region` without `AWS_REGION` now gets
 `us-east-1` there, so for example a bucket created without an explicit location lands in
 `us-east-1`. Set `AWS_REGION` on such instances. ECS, Fargate, EKS (IRSA) and Lambda inject
