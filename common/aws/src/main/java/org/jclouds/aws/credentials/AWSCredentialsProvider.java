@@ -16,6 +16,7 @@
  */
 package org.jclouds.aws.credentials;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 
 import org.jclouds.domain.Credentials;
@@ -221,7 +222,7 @@ public class AWSCredentialsProvider {
     }
 
     /**
-     * Returns the AWS region to use for API calls, detected once per process.
+     * Returns the AWS region detected by the SDK's full chain, once per process.
      * <p>
      * If AWS SDK is available, uses DefaultAwsRegionProviderChain which checks:
      * <ol>
@@ -239,7 +240,10 @@ public class AWSCredentialsProvider {
      * provider metadata; use {@link #getConfiguredRegion()} there.
      *
      * @return AWS region identifier (e.g., "us-east-1")
+     * @deprecated no jclouds code needs the instance metadata service to name a region; use
+     *             {@link #getConfiguredRegion()}, which never contacts it. Kept because it is public API.
      */
+    @Deprecated
     public String getRegion() {
         if (!AWS_SDK_AVAILABLE) {
             logger.info(Logger.formatWithContext("AWS SDK not available, using default region: " + DEFAULT_REGION));
@@ -260,8 +264,8 @@ public class AWSCredentialsProvider {
 
     /**
      * Returns the region the environment states, without contacting the instance metadata service:
-     * the AWS_REGION / AWS_DEFAULT_REGION environment variables, the aws.region system property, or
-     * the profile file; {@value #DEFAULT_REGION} when none of them names one.
+     * the AWS_REGION environment variable, the aws.region system property, or the profile file;
+     * {@value #DEFAULT_REGION} when none of them names one.
      * <p>
      * Safe to call from provider metadata constructors, which run for every provider on the
      * classpath whenever any context is built, in any environment.
@@ -277,6 +281,14 @@ public class AWSCredentialsProvider {
                     .getRegion().id();
         } catch (Exception e) {
             return DEFAULT_REGION;
+        }
+    }
+
+    /** Forgets the detected region so a test can drive detection itself. */
+    @VisibleForTesting
+    static void resetDetectedRegionForTesting() {
+        synchronized (DETECTION_LOCK) {
+            detectedRegion = null;
         }
     }
 

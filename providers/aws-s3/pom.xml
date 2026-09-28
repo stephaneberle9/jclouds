@@ -31,9 +31,6 @@
   <description>Simple Storage Service (S3) implementation targeted to Amazon Web Services</description>
 
   <properties>
-    <!-- test scope only: lets the metadata test run with the SDK present, as it is in applications
-         that opt into ambient credentials; keep in sync with common/aws -->
-    <awssdk.version>2.36.2</awssdk.version>
     <test.aws.identity>FIXME_IDENTITY</test.aws.identity>
     <test.aws.credential>FIXME_CREDENTIAL</test.aws.credential>
     <test.initializer>org.jclouds.aws.s3.blobstore.integration.AWSS3TestInitializer</test.initializer>
@@ -72,6 +69,15 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.jclouds.common</groupId>
+      <artifactId>aws</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <!-- test scope only: lets the metadata tests run with the SDK present, as it is in
+         applications that opt into ambient credentials -->
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>auth</artifactId>
@@ -120,6 +126,44 @@
       <optional>true</optional>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- *InstanceMetadataTest classes change JVM-wide system properties (the instance
+               metadata endpoint, the profile files, aws.region); they must not share a JVM
+               with tests running in parallel and run alone in the execution below -->
+          <excludes combine.children="append">
+            <exclude>**/*IntegrationTest.java</exclude>
+            <exclude>**/*LiveTest.java</exclude>
+            <exclude>**/*InstanceMetadataTest.java</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>instance-metadata</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <threadCount>1</threadCount>
+              <includes combine.self="override">
+                <include>**/*InstanceMetadataTest.java</include>
+              </includes>
+              <excludes combine.self="override">
+                <exclude>**/*IntegrationTest.java</exclude>
+                <exclude>**/*LiveTest.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
