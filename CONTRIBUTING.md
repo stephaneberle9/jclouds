@@ -498,8 +498,8 @@ git push origin main
 ### 3. Create and Push a Version Tag
 
 ```bash
-# Create annotated tag
-git tag -a v2.9.1 -m "Release version 2.9.1"
+# Create signed annotated tag (an unsigned one shows as "Unverified" on GitHub)
+git tag -s v2.9.1 -m "Release version 2.9.1"
 
 # Push tag to trigger release deployment
 git push origin v2.9.1
