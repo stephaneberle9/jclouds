@@ -20,7 +20,20 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.jclouds.logging.Logger;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Supplier;
@@ -89,36 +102,106 @@ public class AWSCredentialsProviderTest {
       }
    }
 
-   @Test
-   public void testConfiguredRegionDoesNotWaitForInstanceMetadata() {
-      // Off EC2 the instance metadata service is unreachable and every attempt to reach it is a
-      // connect timeout of a second or more; the configured lookup must never go there. A bound
-      // well below one attempt separates the two behaviours without depending on the machine.
-      String original = System.getProperty("aws.region");
-      try {
-         System.clearProperty("aws.region");
-         long start = System.nanoTime();
-         String region = new AWSCredentialsProvider().getConfiguredRegion();
-         long millis = (System.nanoTime() - start) / 1_000_000L;
-         assertNotNull(region, "Region should never be null");
-         assertTrue(millis < 800, "getConfiguredRegion() took " + millis
-               + " ms; it must not consult the instance metadata service");
-      } finally {
-         if (original != null) {
-            System.setProperty("aws.region", original);
-         }
+   @Test(timeOut = 30_000)
+   public void testConfiguredRegionNeverContactsTheInstanceMetadataService() throws IOException {
+      skipIfTheEnvironmentNamesARegion();
+      try (BlackHoleMetadataService imds = new BlackHoleMetadataService()) {
+         assertEquals(new AWSCredentialsProvider().getConfiguredRegion(), "us-east-1",
+               "With no region configured anywhere, getConfiguredRegion() should fall back to the default");
+         assertEquals(imds.connections(), 0,
+               "getConfiguredRegion() must not open a connection to the instance metadata service");
       }
    }
 
-   @Test
-   public void testRegionIsDetectedOncePerProcess() {
-      String first = new AWSCredentialsProvider().getRegion();
-      long start = System.nanoTime();
-      String second = new AWSCredentialsProvider().getRegion();
-      long millis = (System.nanoTime() - start) / 1_000_000L;
-      assertEquals(second, first, "Every instance should see the region detected once for the process");
-      assertTrue(millis < 200, "A second getRegion() took " + millis
-            + " ms; the detected region must be memoized, failure included");
+   @Test(timeOut = 60_000)
+   public void testDetectedRegionIsMemoizedAcrossInstances() throws IOException {
+      skipIfTheEnvironmentNamesARegion();
+      try (BlackHoleMetadataService imds = new BlackHoleMetadataService()) {
+         String first = new AWSCredentialsProvider().getRegion();
+         int connectionsAfterFirst = imds.connections();
+         // A region configured after the first detection must not be observed: the outcome is
+         // process-wide, and so is the decision not to ask the instance metadata service again.
+         System.setProperty("aws.region", "eu-central-1".equals(first) ? "eu-west-1" : "eu-central-1");
+         String second = new AWSCredentialsProvider().getRegion();
+         assertEquals(second, first, "Every instance should see the region detected once for the process");
+         assertEquals(imds.connections(), connectionsAfterFirst,
+               "A second getRegion() must not contact the instance metadata service again");
+      }
+   }
+
+   /**
+    * The SDK's region chain reads AWS_REGION before anything else, and a test cannot unset an
+    * environment variable: on a machine that names a region there the metadata service is never
+    * reached with or without the fix, so the assertions below would prove nothing.
+    */
+   private static void skipIfTheEnvironmentNamesARegion() {
+      if (System.getenv("AWS_REGION") != null) {
+         throw new SkipException("AWS_REGION is set in the environment; the instance metadata path is not reachable");
+      }
+   }
+
+   /**
+    * Stands in for the EC2 instance metadata service: accepts every connection and never answers,
+    * which is what 169.254.169.254 looks like from anywhere but EC2. Points the SDK at it and takes
+    * every configured region source away for the duration, restoring all of it on close.
+    */
+   private static final class BlackHoleMetadataService implements AutoCloseable {
+      private final ServerSocket socket;
+      private final List<Socket> held = Collections.synchronizedList(new ArrayList<Socket>());
+      private final AtomicInteger connections = new AtomicInteger();
+      private final Map<String, String> savedProperties = new HashMap<String, String>();
+
+      BlackHoleMetadataService() throws IOException {
+         socket = new ServerSocket(0, 50, InetAddress.getLoopbackAddress());
+         Thread acceptor = new Thread(() -> {
+            while (!socket.isClosed()) {
+               try {
+                  held.add(socket.accept());
+                  connections.incrementAndGet();
+               } catch (IOException e) {
+                  return;
+               }
+            }
+         }, "black-hole-instance-metadata");
+         acceptor.setDaemon(true);
+         acceptor.start();
+         File emptyConfig = File.createTempFile("aws-config", ".empty");
+         emptyConfig.deleteOnExit();
+         set("aws.ec2MetadataServiceEndpoint", "http://127.0.0.1:" + socket.getLocalPort());
+         set("aws.configFile", emptyConfig.getAbsolutePath());
+         set("aws.sharedCredentialsFile", emptyConfig.getAbsolutePath());
+         set("aws.region", null);
+      }
+
+      int connections() {
+         return connections.get();
+      }
+
+      private void set(String key, String value) {
+         if (!savedProperties.containsKey(key)) {
+            savedProperties.put(key, System.getProperty(key));
+         }
+         if (value == null) {
+            System.clearProperty(key);
+         } else {
+            System.setProperty(key, value);
+         }
+      }
+
+      @Override
+      public void close() throws IOException {
+         for (Map.Entry<String, String> entry : savedProperties.entrySet()) {
+            if (entry.getValue() == null) {
+               System.clearProperty(entry.getKey());
+            } else {
+               System.setProperty(entry.getKey(), entry.getValue());
+            }
+         }
+         for (Socket s : held) {
+            s.close();
+         }
+         socket.close();
+      }
    }
 
    @Test

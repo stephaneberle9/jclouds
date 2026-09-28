@@ -147,7 +147,7 @@ BlobStoreContext context = ContextBuilder.newBuilder("aws-s3")
 // Or use system property: -Daws-s3.region=us-west-2
 ```
 
-See the [AWS Common README](../../common/aws/README.md#region-detection) for automatic region detection options.
+See the [AWS Common README](../../common/aws/README.md#region-detection) for how the region is resolved (configured sources only; the instance metadata service is never consulted).
 
 ## Configuration Properties
 
@@ -155,7 +155,7 @@ Key properties you can override:
 
 | Property | Description | Default |
 |----------|-------------|---------|
-| `jclouds.region` | AWS region to use | Auto-detected |
+| `jclouds.region` | AWS region to use | `AWS_REGION` / `aws.region` / `~/.aws/config`, else `us-east-1`; never instance metadata |
 | `jclouds.s3.virtual-host-buckets` | Use virtual-host style URLs | `true` |
 | `jclouds.max-connections-per-context` | Max HTTP connections | `20` |
 | `jclouds.s3.service-path` | Service path (for S3-compatible services) | `/` |

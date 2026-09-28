@@ -16,8 +16,6 @@
  */
 package org.jclouds.aws.credentials;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.google.common.base.Supplier;
 
 import org.jclouds.domain.Credentials;
@@ -93,8 +91,10 @@ public class AWSCredentialsProvider {
     // instance metadata), so it is shared by every instance and detected once, failure included.
     // The SDK chain ends at the EC2 instance metadata service, and away from EC2 every attempt to
     // reach it is a connect timeout: a per-instance lookup made each provider metadata construction
-    // pay that timeout again (~40 s of it during one application start).
-    private static final AtomicReference<String> DETECTED_REGION = new AtomicReference<>();
+    // pay that timeout again (~40 s of it during one application start), and every credential
+    // resolution after it.
+    private static final Object DETECTION_LOCK = new Object();
+    private static volatile String detectedRegion;
 
     /**
      * Checks if AWS SDK v2 classes are available on the classpath at runtime.
@@ -159,7 +159,9 @@ public class AWSCredentialsProvider {
                 String sessionToken = awsSessionCredentials.sessionToken();
                 logger.info(Logger.formatWithContext("- Session Token: " + sessionToken.substring(0, Math.min(8, sessionToken.length())) + "..."));
             }
-            logger.info(Logger.formatWithContext("- Region: " + getRegion()));
+            if (logger.isInfoEnabled()) {
+                logger.info(Logger.formatWithContext("- Region: " + getConfiguredRegion()));
+            }
             return awsCredentials;
         } catch (Exception e) {
             throw new IllegalStateException(
@@ -229,7 +231,10 @@ public class AWSCredentialsProvider {
      *   <li>EC2 instance metadata</li>
      * </ol>
      * <p>
-     * If AWS SDK is not available or region detection fails, returns {@value #DEFAULT_REGION}.
+     * If AWS SDK is not available or region detection fails, returns {@value #DEFAULT_REGION}. The
+     * outcome is memoized for the life of the process, failure included: a transient failure at the
+     * first call pins {@value #DEFAULT_REGION} until the process restarts.
+     * <p>
      * The last step contacts the instance metadata service, so do not call this while building
      * provider metadata; use {@link #getConfiguredRegion()} there.
      *
@@ -240,10 +245,15 @@ public class AWSCredentialsProvider {
             logger.info(Logger.formatWithContext("AWS SDK not available, using default region: " + DEFAULT_REGION));
             return DEFAULT_REGION;
         }
-        String region = DETECTED_REGION.get();
+        String region = detectedRegion;
         if (region == null) {
-            DETECTED_REGION.compareAndSet(null, detectRegion());
-            region = DETECTED_REGION.get();
+            synchronized (DETECTION_LOCK) {
+                region = detectedRegion;
+                if (region == null) {
+                    region = detectRegion();
+                    detectedRegion = region;
+                }
+            }
         }
         return region;
     }

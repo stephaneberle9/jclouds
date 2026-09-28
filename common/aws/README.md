@@ -211,13 +211,26 @@ ContextBuilder.newBuilder("aws-s3")
 
 ## Region Detection
 
-Region is automatically detected from:
+The region a provider puts into `jclouds.region` comes from configured sources only:
 1. System property: `aws-s3.region` (or provider-specific property)
-2. AWS SDK DefaultAwsRegionProviderChain:
-   - Environment variable: `AWS_REGION`
-   - `~/.aws/config` file
-   - EC2 instance metadata
-   - Default: `us-east-1`
+2. Environment variable `AWS_REGION`, or system property `aws.region`
+3. `~/.aws/config` file (`region` of the active profile)
+4. Default: `us-east-1`
+
+The EC2 instance metadata service is **not** consulted for this. Provider metadata is constructed
+for every provider on the classpath whenever any context is built, and away from EC2 every attempt
+to reach the metadata service is a connect timeout: before 2.9.2 an application building two
+`aws-s3` contexts spent about 40 seconds of its start-up in such attempts.
+
+**Behavior change for bare EC2 instances (2.9.2):** an instance (or Elastic Beanstalk environment)
+that relied on the metadata service to fill `jclouds.region` without `AWS_REGION` now gets
+`us-east-1` there, so for example a bucket created without an explicit location lands in
+`us-east-1`. Set `AWS_REGION` on such instances. ECS, Fargate, EKS (IRSA) and Lambda inject
+`AWS_REGION` themselves and are unaffected. Upstream Apache jclouds sets no default region at all.
+
+`AWSCredentialsProvider.getRegion()` still runs the SDK's full `DefaultAwsRegionProviderChain`,
+instance metadata included, detected once per process (failure included); provider metadata does
+not use it.
 
 ## For Provider Module Developers
 
@@ -243,10 +256,15 @@ public static class Builder extends YourApiMetadata.Builder<YourClient, Builder>
         super(YourClient.class);
         id("aws-yourservice")
             .defaultCredentialsSupplier(awsCredentialsProvider.getCredentialsSupplier())
-            .defaultProperties(defaultProperties(awsCredentialsProvider.getRegion()));
+            // configured sources only: this constructor runs for every provider on the
+            // classpath whenever any context is built, so it must never wait for the network
+            .defaultProperties(defaultProperties(awsCredentialsProvider.getConfiguredRegion()));
     }
 }
 ```
+
+Never call `getRegion()` here: it ends at the EC2 instance metadata service, and away from EC2
+that is a connect timeout paid on every context construction.
 
 ## Debugging Credentials
 
