@@ -132,15 +132,20 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
+        <executions>
           <!-- *InstanceMetadataTest classes change JVM-wide system properties (the instance
                metadata endpoint, the profile files, aws.region); they must not share a JVM
-               with tests running in parallel and run alone in the execution below -->
-          <excludes combine.children="append">
-            <exclude>**/*InstanceMetadataTest.java</exclude>
-          </excludes>
-        </configuration>
-        <executions>
+               with tests running in parallel: keep them out of the parallel default-test run
+               (and only that one, so the parent's integration execution is unaffected) and run
+               them alone in the instance-metadata execution below -->
+          <execution>
+            <id>default-test</id>
+            <configuration>
+              <excludes combine.children="append">
+                <exclude>**/*InstanceMetadataTest.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
           <execution>
             <id>instance-metadata</id>
             <phase>test</phase>
